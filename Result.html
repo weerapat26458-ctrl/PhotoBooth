@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Your Photo - Valentine Photobooth</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-pink: #ffb6c1;
+            --dark-pink: #ff69b4;
+            --soft-pink: #fff0f3;
+            --navy-blue: #2c3e50;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--soft-pink);
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* --- Falling Hearts Animation --- */
+        .heart-particle {
+            position: fixed;
+            top: -10%;
+            color: var(--dark-pink);
+            font-size: 20px;
+            user-select: none;
+            z-index: 0;
+            opacity: 0.5;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* --- Result Card Container --- */
+        .result-container {
+            position: relative;
+            z-index: 10;
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.15);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .photo-preview {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 0 auto 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: block;
+            border: 8px solid #fff;
+            outline: 1px solid #eee;
+        }
+
+        /* --- QR Section (Single QR) --- */
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            background: #fff;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 3px solid var(--navy-blue);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-label {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--navy-blue);
+            letter-spacing: 1px;
+        }
+
+        .action-btns {
+            margin-top: 40px;
+        }
+
+        .btn-home {
+            background-color: var(--dark-pink);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+        }
+
+        .btn-home:hover {
+            transform: scale(1.08);
+            background-color: #e05297;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="result-container">
+        <img src="https://via.placeholder.com/600x1800?text=Your+Result" alt="Final Result" class="photo-preview" id="finalPhoto">
+
+        <div class="qr-section">
+            <div class="qr-code">
+                <img src="https://via.placeholder.com/150?text=Scan+to+Download" width="100%">
+            </div>
+            <div class="qr-label">scan to download</div>
+        </div>
+
+        <div class="action-btns">
+            <a href="index.html" class="btn-home">TAKE MORE PHOTOS</a>
+        </div>
+        
+        <p class="footer-note">Scan with your phone to save the memory!</p>
+    </div>
+
+    <script>
+        // --- ระบบ Falling Hearts ---
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            heart.style.opacity = Math.random() * 0.4;
+            heart.style.fontSize = (Math.random() * 15 + 10) + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        setInterval(createHeart, 400);
+
+        // คุณสามารถดึง URL จาก Parameter มาแสดงรูปจริงได้ เช่น:
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const photoUrl = urlParams.get('url');
+        // if(photoUrl) document.getElementById('finalPhoto').src = photoUrl;
+    </script>
+</body>
+</html>

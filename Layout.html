@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine Photobooth - Select Layout</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+        :root { --primary-pink: #ffb6c1; --dark-pink: #ff69b4; --soft-pink: #fff0f3; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--soft-pink); margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .heart-particle { position: fixed; top: -10%; color: var(--dark-pink); font-size: 20px; user-select: none; z-index: 0; opacity: 0.6; animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+        .container { position: relative; z-index: 10; text-align: center; width: 100%; }
+        .header h1 { font-size: 3rem; color: #333; margin: 0; text-transform: lowercase; }
+        .header p { color: #888; margin-bottom: 40px; }
+        .layout-grid { display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; }
+        .layout-card { background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border: 4px solid transparent; width: 160px; position: relative; }
+        .layout-card:hover { transform: translateY(-10px); box-shadow: 0 12px 25px rgba(255, 105, 180, 0.2); }
+        .layout-card.active { border-color: var(--dark-pink); background: #fff; }
+        .layout-card img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; background: #eee; }
+        .badge { position: absolute; top: -10px; right: -10px; background: #ffeb3b; color: #333; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        .badge.new { background: var(--dark-pink); color: white; }
+        .start-btn { margin-top: 50px; background: var(--dark-pink); color: white; border: none; padding: 15px 60px; font-size: 1.3rem; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4); }
+        .start-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>choose your layout</h1>
+            <p>Select from our collection of photo booth layouts</p>
+        </div>
+        <div class="layout-grid">
+            <div class="layout-card" onclick="select(this, 'polaroid')">
+                <span class="badge new">NEW</span>
+                <img src="https://via.placeholder.com/150x180?text=Polaroid" alt="Polaroid">
+                <div>Polaroid</div>
+            </div>
+            <div class="layout-card" onclick="select(this, 'strip3')">
+                <span class="badge">TRY IT NOW</span>
+                <img src="https://via.placeholder.com/150x450?text=Strip+3" alt="Strip 3">
+                <div>Classic Strip (3)</div>
+            </div>
+            <div class="layout-card" onclick="select(this, 'strip4')">
+                <span class="badge new">NEW LAYOUT</span>
+                <img src="https://via.placeholder.com/150x450?text=Strip+4" alt="Strip 4">
+                <div>Full Strip (4)</div>
+            </div>
+            <div class="layout-card" onclick="select(this, 'grid2x2')">
+                <img src="https://via.placeholder.com/150x225?text=Grid+2x2" alt="Grid 2x2">
+                <div>Grid 2x2</div>
+            </div>
+        </div>
+        <button id="btn" class="start-btn" disabled onclick="go()">LET'S SHOOT!</button>
+    </div>
+
+    <script>
+        let selected = null;
+        function select(el, id) {
+            document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            selected = id;
+            document.getElementById('btn').disabled = false;
+        }
+        function go() {
+            // ย้ายไปหน้า Camera พร้อมส่งค่า layout ไปทาง URL
+            window.location.href = `Camera.html?layout=${selected}`;
+        }
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            heart.style.opacity = Math.random() * 0.5;
+            heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, 5000);
+        }
+        setInterval(createHeart, 300);
+    </script>
+</body>
+</html>

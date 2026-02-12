@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture - Owl Always Love You</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-pink: #ffb6c1;
+            --dark-pink: #ff69b4;
+            --soft-pink: #fff0f3;
+            --overlay-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--soft-pink);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Falling Hearts (Background) --- */
+        .heart-particle { position: fixed; top: -10%; color: var(--dark-pink); font-size: 20px; z-index: 0; opacity: 0.5; animation: fall linear infinite; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            width: 100%;
+            height: 100%;
+            max-width: 1400px;
+            padding: 20px;
+            box-sizing: border-box;
+            gap: 20px;
+        }
+
+        .header { text-align: center; }
+        .header h1 { font-size: 2rem; margin: 0; color: #333; text-transform: uppercase; letter-spacing: 2px; }
+        .header p { color: #666; margin: 5px 0 0; font-weight: 300; }
+
+        /* --- Main Layout: 3 Columns --- */
+        .workspace {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 30px;
+            align-items: center;
+            height: 100%;
+        }
+
+        /* --- Left Panel: Controls & Preview --- */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .control-card {
+            background: var(--overlay-bg);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .timer-select select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            font-family: 'Kanit';
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .timer-select select:focus { border-color: var(--dark-pink); }
+
+        .preview-container {
+            background: var(--overlay-bg);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1; /* ยืดให้เต็มพื้นที่ */
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* จำลอง Layout ให้ดูสมจริง */
+        .sim-strip {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .sim-strip .sim-box { width: 120px; height: 90px; } /* 4:3 Aspect Ratio */
+
+        .sim-polaroid {
+            background: white;
+            padding: 15px 15px 50px 15px; /* เว้นด้านล่างเยอะๆ เหมือน Polaroid */
+            border: 1px solid #ddd;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .sim-polaroid .sim-box { width: 180px; height: 180px; } /* Square */
+
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .sim-grid .sim-box { width: 100px; height: 75px; }
+
+        .sim-box {
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-weight: bold;
+            overflow: hidden;
+            position: relative;
+        }
+        .sim-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- Center Panel: Camera --- */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .camera-frame {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: black;
+            border-radius: 25px;
+            overflow: hidden;
+            border: 8px solid white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .countdown-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 10rem;
+            font-weight: 700;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .shutter-btn {
+            width: 90px; height: 90px;
+            background: #ff4757;
+            border: 6px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: grid; place-items: center;
+            font-size: 2rem;
+        }
+        .shutter-btn:hover { transform: scale(1.1); background: #ff6b81; }
+        .shutter-btn:active { transform: scale(0.95); }
+
+        /* --- Right Panel: Filters --- */
+        .right-panel {
+            background: var(--overlay-bg);
+            border-radius: 20px;
+            padding: 20px;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .filter-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .filter-item {
+            cursor: pointer;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .filter-item:hover { transform: translateY(-5px); }
+        
+        .filter-thumb {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: #ddd;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 3px solid transparent;
+            overflow: hidden;
+            position: relative;
+        }
+        /* สร้างสีหลอกๆ ให้รู้ว่าเป็นฟิลเตอร์อะไร */
+        .filter-thumb::after { content:''; position:absolute; inset:0; background:var(--bg, transparent); }
+        
+        .filter-item.active .filter-thumb { border-color: var(--dark-pink); box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); }
+        .filter-name { font-size: 0.8rem; color: #555; font-weight: 500; }
+
+        /* Scrollbar สวยๆ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Owl Always Love You</h1>
+            <p>เก็บภาพความทรงจำสุดประทับใจ</p>
+        </div>
+
+        <div class="workspace">
+            <div class="left-panel">
+                <div class="control-card timer-select">
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:#555;">⏱️ ตั้งเวลาถ่าย</label>
+                    <select id="timerVal">
+                        <option value="3">3 วินาที</option>
+                        <option value="5">5 วินาที</option>
+                        <option value="10">10 วินาที</option>
+                    </select>
+                </div>
+
+                <div class="preview-container">
+                    <div style="font-size:0.9rem; font-weight:600; color:#888; margin-bottom:15px; letter-spacing:1px;">LAYOUT PREVIEW</div>
+                    <div id="layoutSim"></div>
+                    <div id="status" style="margin-top:15px; color:var(--dark-pink); font-weight:bold;">SHOT: 0 / 3</div>
+                </div>
+            </div>
+
+            <div class="center-panel">
+                <div class="camera-frame">
+                    <video id="video" autoplay playsinline></video>
+                    <div id="countdown" class="countdown-overlay">3</div>
+                </div>
+                <button class="shutter-btn" onclick="startShot()">📸</button>
+            </div>
+
+            <div class="right-panel">
+                <div style="text-align:center; font-weight:600; margin-bottom:15px; color:#555;">✨ FILTERS</div>
+                <div class="filter-list" id="filterGrid">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const layoutSim = document.getElementById('layoutSim');
+        const statusEl = document.getElementById('status');
+        const countdownEl = document.getElementById('countdown');
+
+        // รับค่า URL Parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const layoutType = urlParams.get('layout') || 'strip3';
+        
+        let shots = [];
+        const maxShots = layoutType === 'strip4' ? 4 : (layoutType === 'polaroid' ? 1 : (layoutType === 'grid2x2' ? 4 : 3));
+
+        // 1. เปิดกล้อง
+        navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+            .then(stream => video.srcObject = stream)
+            .catch(err => alert("กรุณาอนุญาตให้ใช้กล้อง: " + err));
+
+        // 2. Setup Preview ตาม Layout
+        function initPreview() {
+            layoutSim.className = `sim-${layoutType === 'grid2x2' ? 'grid' : (layoutType === 'polaroid' ? 'polaroid' : 'strip')}`;
+            layoutSim.innerHTML = ''; // Clear old
+
+            for(let i=0; i < maxShots; i++) {
+                const box = document.createElement('div');
+                box.className = 'sim-box';
+                box.id = `box-${i}`;
+                box.innerHTML = `<span style="font-size:1.5rem; opacity:0.3;">${i+1}</span>`;
+                layoutSim.appendChild(box);
+            }
+            updateStatus();
+        }
+
+        function updateStatus() {
+            statusEl.innerText = `SHOT: ${shots.length} / ${maxShots}`;
+        }
+
+        // 3. ถ่ายรูป
+        let isShooting = false;
+        function startShot() {
+            if(isShooting || shots.length >= maxShots) return;
+            isShooting = true;
+
+            let time = parseInt(document.getElementById('timerVal').value);
+            countdownEl.style.display = 'flex';
+            countdownEl.innerText = time;
+
+            const timer = setInterval(() => {
+                time--;
+                if(time > 0) {
+                    countdownEl.innerText = time;
+                } else {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    capture();
+                    isShooting = false;
+                }
+            }, 1000);
+        }
+
+        function capture() {
+            const canvas = document.getElementById('canvas');
+            // ตั้งขนาด Canvas ตามความละเอียดวิดีโอจริง
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            // Apply Filter & Mirror
+            ctx.filter = getComputedStyle(video).filter;
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.9);
+            shots.push(imgData);
+
+            // Update Preview Box
+            const targetBox = document.getElementById(`box-${shots.length-1}`);
+            targetBox.innerHTML = `<img src="${imgData}">`;
+
+            updateStatus();
+
+            if(shots.length === maxShots) {
+                setTimeout(() => {
+                    // ส่งข้อมูลรูปไปหน้า Result (ในของจริงต้องอัปโหลดขึ้น Server ก่อน)
+                    // encodeURIComponent เพื่อความปลอดภัยของ URL
+                    window.location.href = `Result.html?layout=${layoutType}`; 
+                }, 800);
+            }
+        }
+
+        // 4. สร้างปุ่ม Filter
+        const filters = [
+            { name: 'Normal', val: 'none', color: 'transparent' },
+            { name: 'B&W', val: 'grayscale(100%)', color: '#555' },
+            { name: 'Sepia', val: 'sepia(80%)', color: '#c0a080' },
+            { name: 'Warm', val: 'saturate(1.2) sepia(20%)', color: '#ffcc99' },
+            { name: 'Cool', val: 'hue-rotate(180deg) opacity(0.8)', color: '#99ccff' },
+            { name: 'Vintage', val: 'contrast(1.2) sepia(40%)', color: '#d4a373' },
+            { name: 'Bright', val: 'brightness(1.2) contrast(1.1)', color: '#fff' },
+            { name: 'Soft', val: 'blur(1px) brightness(1.1)', color: '#eee' },
+        ];
+
+        const filterGrid = document.getElementById('filterGrid');
+        filters.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'filter-item';
+            div.innerHTML = `
+                <div class="filter-thumb" style="--bg:${f.color}; filter:${f.val !== 'none' ? f.val : ''}"></div>
+                <div class="filter-name">${f.name}</div>
+            `;
+            div.onclick = () => {
+                video.style.filter = f.val;
+                document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+            };
+            filterGrid.appendChild(div);
+        });
+
+        // 5. Falling Hearts Effect
+        setInterval(() => {
+            const h = document.createElement('div');
+            h.classList.add('heart-particle'); h.innerHTML = '❤️';
+            h.style.left = Math.random() * 100 + 'vw';
+            h.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            h.style.fontSize = (Math.random() * 15 + 10) + 'px';
+            document.body.appendChild(h);
+            setTimeout(() => h.remove(), 6000);
+        }, 500);
+
+        // Run
+        initPreview();
+
+    </script>
+</body>
+</html>
