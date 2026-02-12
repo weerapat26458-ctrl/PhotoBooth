@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine Wall - Wind Effect</title>
+    <style>
+        :root {
+            --bg-pink: #fff0f3;
+            --paper-white: #ffffff;
+            --accent-pink: #ff4d6d;
+            --soft-pink: #ffb3c1;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-pink);
+            background-image: radial-gradient(var(--soft-pink) 1px, transparent 1px);
+            background-size: 40px 40px;
+            overflow: hidden;
+            font-family: 'Tahoma', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #wall {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            z-index: 1;
+            /* เพิ่ม perspective เพื่อให้การแกว่งดูมีมิติขึ้นเล็กน้อย */
+            perspective: 1000px;
+        }
+
+        /* --- แก้ไข 1: หัวใจลอยจากบนลงล่าง --- */
+        .floating-heart-bg {
+            position: absolute;
+            color: var(--soft-pink);
+            opacity: 0;
+            pointer-events: none;
+            top: -10vh; /* เริ่มต้นเหนือจอ */
+            animation: floatDown var(--d) linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes floatDown {
+            0% { 
+                transform: translateY(0) scale(0.5) rotate(0deg); 
+                opacity: 0; 
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { 
+                transform: translateY(110vh) scale(1.2) rotate(360deg); /* ตกลงไปใต้จอ */
+                opacity: 0; 
+            }
+        }
+
+        .footer-bar {
+            height: 160px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            display: flex; justify-content: center; align-items: center;
+            border-top: 3px solid var(--soft-pink);
+            z-index: 1000;
+        }
+
+        .btn-start {
+            padding: 22px 70px; font-size: 32px; font-weight: bold; color: white;
+            background: linear-gradient(45deg, var(--accent-pink), #ff85a1);
+            border: none; border-radius: 60px; cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 77, 109, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-start:hover { transform: scale(1.1); box-shadow: 0 15px 35px rgba(255, 77, 109, 0.5); }
+
+        /* --- แก้ไข 2 & 3: เอา Hover ออก และใส่ Wind Effect --- */
+        .photo-item {
+            position: absolute;
+            background: var(--paper-white);
+            padding: 7px 7px 22px 7px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border-radius: 2px;
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.5s ease-out;
+            
+            /* Key: ย้ายจุดหมุนไปไว้ด้านบนตรงกลาง (ตรงที่แปะเทป) */
+            transform-origin: top center;
+            
+            /* อนิเมชั่นลมพัด ใช้ตัวแปรเวลาที่สุ่มมาเพื่อให้แต่ละรูปแกว่งไม่พร้อมกัน */
+            animation: windSway var(--sway-dur) ease-in-out infinite alternate var(--sway-delay);
+        }
+
+        /* Keyframes สำหรับการแกว่งแบบลมพัด */
+        @keyframes windSway {
+            0%   { transform: rotate(calc(var(--r) - 1.5deg)); } /* เอียงซ้ายนิดหน่อยจากมุมเดิม */
+            50%  { transform: rotate(calc(var(--r) + 2deg)); }   /* เอียงขวา */
+            100% { transform: rotate(calc(var(--r) - 0.5deg)); } /* กลับมาเกือบตรงกลาง */
+        }
+
+        .photo-item::before {
+            content: "";
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%) rotate(var(--tape-r));
+            width: 45px; height: 25px;
+            background: rgba(255, 255, 255, 0.7); /* ปรับให้เทปชัดขึ้นนิดนึง */
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.3);
+            /* เทปจะขยับไปพร้อมกับ photo-item แม่ของมัน แต่เนื่องจากจุดหมุนอยู่ตรงเทปพอดี เทปเลยดูเหมือนอยู่นิ่งๆ */
+        }
+
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+        .p-polaroid { width: 85px; height: 105px; }
+        .p-strip { width: 55px; height: 165px; }
+        .p-grid { width: 115px; height: 165px; }
+        .fade-out { opacity: 0 !important; transform: scale(0.3) !important; }
+    </style>
+</head>
+<body>
+
+<div id="wall"></div>
+
+<div class="footer-bar">
+    <button class="btn-start" onclick="goToCapture()">❤️ เริ่มถ่ายรูป ❤️</button>
+</div>
+
+<script>
+    const wall = document.getElementById('wall');
+    const maxPhotos = 45; 
+    let zIndexCounter = 1;
+
+    const cols = 10; const rows = 4; let gridSlots = [];
+    function initGrid() {
+        gridSlots = [];
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) gridSlots.push({ r, c });
+        gridSlots.sort(() => Math.random() - 0.5);
+    }
+    let slotIndex = 0; initGrid();
+
+    // แก้ไข: หัวใจตกลงมา
+    function createBgHeart() {
+        const heart = document.createElement('div');
+        const heartIcons = ['❤️', '💖', '💗', '💕', '🌸'];
+        heart.className = 'floating-heart-bg';
+        heart.innerHTML = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.fontSize = (15 + Math.random() * 25) + 'px';
+        heart.style.setProperty('--d', (8 + Math.random() * 15) + 's'); // ตกช้าๆ
+        wall.appendChild(heart);
+        setTimeout(() => heart.remove(), 20000);
+    }
+
+    function addPhoto(type) {
+        const currentPhotos = document.getElementsByClassName('photo-item');
+        if (currentPhotos.length >= maxPhotos) {
+            const oldest = currentPhotos[0];
+            oldest.classList.add('fade-out');
+            setTimeout(() => { if(oldest.parentNode === wall) wall.removeChild(oldest); }, 1500);
+        }
+
+        if (slotIndex >= gridSlots.length) { slotIndex = 0; gridSlots.sort(() => Math.random() - 0.5); }
+        const slot = gridSlots[slotIndex]; slotIndex++;
+
+        const item = document.createElement('div');
+        item.className = `photo-item ${type}`;
+
+        const cellW = window.innerWidth / cols;
+        const cellH = (window.innerHeight - 160) / rows;
+        const offsetX = (Math.random() - 0.5) * (cellW * 0.5);
+        const offsetY = (Math.random() - 0.5) * (cellH * 0.5);
+        const rotate = (Math.random() - 0.5) * 30;
+        const tapeRotate = (Math.random() - 0.5) * 20;
+
+        // สุ่มค่าเวลาสำหรับการแกว่ง เพื่อให้แต่ละรูปแกว่งไม่พร้อมกัน ดูธรรมชาติ
+        const swayDuration = (3 + Math.random() * 5) + 's';
+        const swayDelay = -(Math.random() * 5) + 's';
+
+        item.style.left = `${(slot.c * cellW) + (cellW/4) + offsetX}px`;
+        item.style.top = `${(slot.r * cellH) + (cellH/4) + offsetY}px`;
+        item.style.setProperty('--r', `${rotate}deg`);
+        item.style.setProperty('--tape-r', `${tapeRotate}deg`);
+        item.style.setProperty('--sway-dur', swayDuration);
+        item.style.setProperty('--sway-delay', swayDelay);
+        item.style.zIndex = zIndexCounter++;
+        item.style.transform = `scale(0)`;
+
+        item.innerHTML = `<img src="https://picsum.photos/400/600?random=${Math.random()}">`;
+        wall.appendChild(item);
+
+        setTimeout(() => {
+            // ตอนเด้งมา ให้เริ่มที่มุม rotate ปกติ แล้ว animation จะเข้ามาแทนที่
+            item.style.transform = `scale(1) rotate(${rotate}deg)`;
+        }, 50);
+    }
+
+    function goToCapture() { window.location.href = 'capture.html'; }
+
+    window.onload = () => {
+        const types = ['p-polaroid', 'p-strip', 'p-grid'];
+        setInterval(createBgHeart, 600); // ปล่อยหัวใจถี่ขึ้นนิดนึง
+        for(let i=0; i<25; i++) setTimeout(() => addPhoto(types[i % 3]), i * 150);
+        setInterval(() => addPhoto(types[Math.floor(Math.random() * 3)]), 5000);
+    };
+</script>
+
+</body>
+</html>
