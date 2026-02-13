@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customize Frame - Valentine Photobooth</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #fff0f3;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .header { margin-top: 10px; text-align: center; color: #ff69b4; }
+        .header h1 { margin: 0; font-size: 1.5rem; }
+
+        .preview-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background-image: radial-gradient(#ffb3c1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 60vh;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: white;
+        }
+
+        .controls {
+            width: 100%;
+            background: white;
+            padding: 15px 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .frame-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 0 20px;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #ff69b4 #eee;
+        }
+        
+        .frame-item {
+            min-width: 80px;
+            height: 80px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            overflow: hidden;
+            background: #eee;
+            transition: 0.2s;
+            position: relative;
+        }
+        .frame-item img { width: 100%; height: 100%; object-fit: contain; }
+        .frame-item.active { border-color: #ff69b4; transform: scale(1.05); }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
+        }
+
+        button, .btn-home {
+            padding: 12px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-family: 'Kanit';
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-confirm { background: #ff4757; color: white; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); }
+        .btn-confirm:hover { transform: scale(1.05); background: #ff6b81; }
+        .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
+
+        .btn-home { background: #eee; color: #555; }
+
+        #upload-loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 1000; font-size: 1.5rem; color: #ff69b4;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="upload-loading">
+        <div>กำลังบันทึกความทรงจำ...</div>
+        <div style="font-size: 1rem; color: #aaa; margin-top: 10px;">กรุณารอสักครู่</div>
+    </div>
+
+    <div class="header">
+        <h1>เลือกกรอบรูปน่ารักๆ ✨</h1>
+    </div>
+
+    <div class="preview-area">
+        <canvas id="finalCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div style="text-align: center; color:#888; font-size:0.9rem;">เลือกกรอบที่ชอบ แล้วกดยืนยันได้เลย</div>
+        <div class="frame-list" id="frameList"></div>
+        <div class="btn-group">
+            <a href="main.html" class="btn-home" onclick="return confirm('กลับหน้าแรกรูปจะหายไปนะ?')">🏠 หน้าแรก</a>
+            <button id="confirmBtn" class="btn-confirm" onclick="uploadAndFinish()">ยืนยัน ✅</button>
+        </div>
+    </div>
+
+    <script>
+    const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
+    const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const canvas = document.getElementById('finalCanvas');
+    const ctx = canvas.getContext('2d');
+    const frameList = document.getElementById('frameList');
+
+    const rawPhotoData = localStorage.getItem('raw_photo');
+    const layoutType = localStorage.getItem('layout_type') || 'strip3';
+
+    let rawImgObj = new Image();
+    let currentFrameObj = null;
+
+    let framesConfig = {
+        'polaroid': { folder: 'assets/frames/1รูป', count: 5 }, 
+        'strip3':   { folder: 'assets/frames/3รูป', count: 4 },
+        'strip4':   { folder: 'assets/frames/4รูปแนวตั้ง', count: 10 }, 
+        'grid2x2':  { folder: 'assets/frames/4รูปgrid', count: 10 }
+    };
+
+    if (rawPhotoData) {
+        rawImgObj.src = rawPhotoData;
+        rawImgObj.onload = () => {
+            canvas.width = rawImgObj.width;
+            canvas.height = rawImgObj.height;
+            drawComposition();
+            loadFrameOptions();
+        };
+    }
+
+    function loadFrameOptions() {
+        const config = framesConfig[layoutType] || framesConfig['strip3'];
+        for (let i = 1; i <= config.count; i++) {
+            const div = document.createElement('div');
+            div.className = 'frame-item';
+            const framePath = `${config.folder}/${i}.png`;
+            const img = document.createElement('img');
+            img.src = framePath;
+            div.appendChild(img);
+            div.onclick = () => {
+                const fImg = new Image();
+                fImg.src = framePath;
+                fImg.onload = () => {
+                    document.querySelectorAll('.frame-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    currentFrameObj = fImg;
+                    drawComposition();
+                };
+            };
+            frameList.appendChild(div);
+        }
+    }
+
+    function drawComposition() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(rawImgObj, 0, 0);
+        if (currentFrameObj) {
+            ctx.drawImage(currentFrameObj, 0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    async function uploadAndFinish() {
+        const confirmBtn = document.getElementById('confirmBtn');
+        const loadingOverlay = document.getElementById('upload-loading');
+        
+        confirmBtn.disabled = true;
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            const timestamp = Date.now();
+            
+            // 1. สร้างรูปใหญ่ (PNG)
+            const fullBlob = dataURLtoBlob(canvas.toDataURL('image/png'));
+            const fullFileName = `results/photo-${timestamp}.png`;
+
+            // 2. สร้างรูปย่อ (Thumbnail)
+            const thumbBlob = await createThumbnail(canvas, 400);
+            const thumbFileName = `gallery/thumb-${timestamp}.jpg`;
+
+            // 3. อัปโหลดทั้งคู่ไปที่ Bucket: 'photobooth'
+            await supabaseClient.storage.from('photobooth').upload(fullFileName, fullBlob);
+            await supabaseClient.storage.from('photobooth').upload(thumbFileName, thumbBlob);
+
+            // 4. รับ URL สาธารณะ
+            const { data: { publicUrl: fullUrl } } = supabaseClient.storage.from('photobooth').getPublicUrl(fullFileName);
+            const { data: { publicUrl: thumbUrl } } = supabaseClient.storage.from('photobooth').getPublicUrl(thumbFileName);
+
+            // 5. บันทึกลงฐานข้อมูล (แก้ชื่อคอลัมน์ให้ตรงตามภาพที่คุณส่งมา)
+            const { error: dbError } = await supabaseClient.from('photos').insert({
+                preview_url: thumbUrl,   // แก้เป็น preview_url ตาม image_96a7f7.png
+                full_res_path: fullUrl, // แก้เป็น full_res_path ตาม image_96a717.png
+                is_active: true
+            });
+
+            if (dbError) throw dbError;
+
+            // สำเร็จ! ไปที่หน้า Result
+            window.location.href = `Result.html?url=${encodeURIComponent(fullUrl)}`;
+
+        } catch (err) {
+            console.error(err);
+            alert("บันทึกไม่สำเร็จ: " + err.message);
+            confirmBtn.disabled = false;
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
+    function dataURLtoBlob(dataurl) {
+        let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+        return new Blob([u8arr], {type:mime});
+    }
+
+    function createThumbnail(sourceCanvas, maxWidth) {
+        return new Promise((resolve) => {
+            const thumbCanvas = document.createElement('canvas');
+            const ratio = maxWidth / sourceCanvas.width;
+            thumbCanvas.width = maxWidth;
+            thumbCanvas.height = sourceCanvas.height * ratio;
+            const tCtx = thumbCanvas.getContext('2d');
+            tCtx.drawImage(sourceCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+            thumbCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+        });
+    }
+</script>
+</body>
+</html>

@@ -5,79 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valentine Photobooth - Select Layout</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
-        :root { --primary-pink: #ffb6c1; --dark-pink: #ff69b4; --soft-pink: #fff0f3; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--soft-pink); margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .heart-particle { position: fixed; top: -10%; color: var(--dark-pink); font-size: 20px; user-select: none; z-index: 0; opacity: 0.6; animation: fall linear infinite; }
-        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
-        .container { position: relative; z-index: 10; text-align: center; width: 100%; }
-        .header h1 { font-size: 3rem; color: #333; margin: 0; text-transform: lowercase; }
-        .header p { color: #888; margin-bottom: 40px; }
-        .layout-grid { display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; }
-        .layout-card { background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border: 4px solid transparent; width: 160px; position: relative; }
-        .layout-card:hover { transform: translateY(-10px); box-shadow: 0 12px 25px rgba(255, 105, 180, 0.2); }
-        .layout-card.active { border-color: var(--dark-pink); background: #fff; }
-        .layout-card img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; background: #eee; }
-        .badge { position: absolute; top: -10px; right: -10px; background: #ffeb3b; color: #333; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
-        .badge.new { background: var(--dark-pink); color: white; }
-        .start-btn { margin-top: 50px; background: var(--dark-pink); color: white; border: none; padding: 15px 60px; font-size: 1.3rem; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4); }
-        .start-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
+
+        :root {
+            --primary-pink: #ff85a2;
+            --dark-pink: #f72585;
+            --soft-pink: #ffe5ec;
+            --glass: rgba(255, 255, 255, 0.7);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fce4ec 0%, #ffebee 100%);
+            background-attachment: fixed;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* --- LOGO มุมขวาบน --- */
+        .brand-logo {
+            position: fixed;
+            top: 25px;
+            right: 30px;
+            z-index: 100;
+        }
+        .brand-logo img {
+            height: 70px; /* ปรับขนาดได้ตามความสวยงาม */
+            width: auto;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+            transition: transform 0.3s ease;
+        }
+        .brand-logo img:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        /* พื้นหลังหัวใจขยับได้ */
+        .bg-blobs {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .heart-particle {
+            position: absolute;
+            top: -10%;
+            pointer-events: none;
+            z-index: 0;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 90%;
+            max-width: 1000px;
+            padding: 40px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-family: 'Pacifico', cursive;
+            font-size: 3.5rem;
+            color: var(--dark-pink);
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .header p {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .layout-card {
+            background: white;
+            border-radius: 25px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid transparent;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+        }
+
+        .layout-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 30px rgba(247, 37, 133, 0.15);
+            border-color: var(--primary-pink);
+        }
+
+        .layout-card.active {
+            border-color: var(--dark-pink);
+            background: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(247, 37, 133, 0.2);
+        }
+
+        .layout-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            background: #fff5f7;
+            padding: 5px;
+        }
+
+        .layout-card span.label {
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ffd60a;
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .badge.new {
+            background: var(--dark-pink);
+            color: white;
+        }
+
+        .start-btn {
+            margin-top: 30px;
+            background: linear-gradient(45deg, var(--dark-pink), var(--primary-pink));
+            color: white;
+            border: none;
+            padding: 18px 80px;
+            font-size: 1.4rem;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: 0.4s ease;
+            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.3);
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-btn:disabled {
+            background: #d1d1d1;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: scale(1.08);
+            box-shadow: 0 15px 35px rgba(247, 37, 133, 0.4);
+            filter: brightness(1.1);
+        }
+
     </style>
 </head>
 <body>
+    <div class="brand-logo">
+        <img src="assets/Logo.png" alt="Logo">
+    </div>
+
+    <div class="bg-blobs" id="heart-bg"></div>
+
     <div class="container">
         <div class="header">
-            <h1>choose your layout</h1>
-            <p>Select from our collection of photo booth layouts</p>
+            <h1>Choose Your Layout</h1>
+            <p>💖 เลือกสไตล์ที่ใช่ ให้ภาพถ่ายบอกความรู้สึก 💖</p>
         </div>
+
         <div class="layout-grid">
-            <div class="layout-card" onclick="select(this, 'polaroid')">
+            <div class="layout-card" onclick="select(this, 'polaroid', 1)">
+                <span class="badge new">POPULAR</span>
+                <img src="assets/frames/1รูป/1.png" alt="Polaroid">
+                <span class="label">Polaroid (1 Act)</span>
+            </div>
+
+            <div class="layout-card" onclick="select(this, 'strip3', 3)">
+                <span class="badge">CLASSIC</span>
+                <img src="assets/frames/3รูป/1.png" alt="Strip 3">
+                <span class="label">Strip (3 Acts)</span>
+            </div>
+
+            <div class="layout-card" onclick="select(this, 'strip4', 4)">
                 <span class="badge new">NEW</span>
-                <img src="https://via.placeholder.com/150x180?text=Polaroid" alt="Polaroid">
-                <div>Polaroid</div>
+                <img src="assets/frames/4รูปแนวตั้ง/1.png" alt="Strip 4">
+                <span class="label">Full Strip (4 Acts)</span>
             </div>
-            <div class="layout-card" onclick="select(this, 'strip3')">
-                <span class="badge">TRY IT NOW</span>
-                <img src="https://via.placeholder.com/150x450?text=Strip+3" alt="Strip 3">
-                <div>Classic Strip (3)</div>
-            </div>
-            <div class="layout-card" onclick="select(this, 'strip4')">
-                <span class="badge new">NEW LAYOUT</span>
-                <img src="https://via.placeholder.com/150x450?text=Strip+4" alt="Strip 4">
-                <div>Full Strip (4)</div>
-            </div>
-            <div class="layout-card" onclick="select(this, 'grid2x2')">
-                <img src="https://via.placeholder.com/150x225?text=Grid+2x2" alt="Grid 2x2">
-                <div>Grid 2x2</div>
+
+            <div class="layout-card" onclick="select(this, 'grid2x2', 4)">
+                <img src="assets/frames/4รูปgrid/1.png" alt="Grid 2x2">
+                <span class="label">Grid (4 Acts)</span>
             </div>
         </div>
-        <button id="btn" class="start-btn" disabled onclick="go()">LET'S SHOOT!</button>
+
+        <button id="btn" class="start-btn" disabled onclick="go()">LET'S SHOOT! 📸</button>
     </div>
 
     <script>
-        let selected = null;
-        function select(el, id) {
+        let selectedLayout = null;
+        let selectedCount = 0;
+
+        function select(el, id, count) {
             document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-            selected = id;
+            selectedLayout = id;
+            selectedCount = count;
             document.getElementById('btn').disabled = false;
         }
+
         function go() {
-            // ย้ายไปหน้า Camera พร้อมส่งค่า layout ไปทาง URL
-            window.location.href = `Camera.html?layout=${selected}`;
+            if (!selectedLayout) return;
+            window.location.href = `camera.html?layout=${selectedLayout}&count=${selectedCount}`;
         }
+
         function createHeart() {
+            const container = document.getElementById('heart-bg');
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
-            heart.innerHTML = '❤️';
+            heart.innerHTML = ['❤️', '💖', '💗', '✨'][Math.floor(Math.random() * 4)];
             heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            heart.style.opacity = Math.random() * 0.5;
+            heart.style.animationDuration = (Math.random() * 4 + 3) + 's';
+            heart.style.opacity = Math.random() * 0.4 + 0.2;
             heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
-            document.body.appendChild(heart);
-            setTimeout(() => { heart.remove(); }, 5000);
+            container.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, 6000);
         }
-        setInterval(createHeart, 300);
+        setInterval(createHeart, 500);
     </script>
 </body>
 </html>

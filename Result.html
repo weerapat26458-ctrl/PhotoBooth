@@ -18,7 +18,7 @@
             font-family: 'Kanit', sans-serif;
             background-color: var(--soft-pink);
             margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,41 +47,47 @@
             position: relative;
             z-index: 10;
             background: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 30px;
             box-shadow: 0 15px 35px rgba(255, 105, 180, 0.15);
             text-align: center;
             max-width: 450px;
             width: 90%;
+            margin: 20px 0;
+        }
+
+        .photo-preview-container {
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto; /* เผื่อรูปมายาวแบบ Strip */
+            margin-bottom: 20px;
+            border-radius: 15px;
+            border: 4px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: #f9f9f9;
         }
 
         .photo-preview {
             width: 100%;
-            max-width: 300px;
             height: auto;
-            margin: 0 auto 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             display: block;
-            border: 8px solid #fff;
-            outline: 1px solid #eee;
         }
 
-        /* --- QR Section (Single QR) --- */
+        /* --- QR Section --- */
         .qr-section {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .qr-code {
-            width: 180px;
-            height: 180px;
+            width: 160px;
+            height: 160px;
             background: #fff;
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 3px solid var(--navy-blue);
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid var(--primary-pink);
             border-radius: 15px;
             display: flex;
             align-items: center;
@@ -89,63 +95,92 @@
         }
 
         .qr-label {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--navy-blue);
-            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .action-btns {
-            margin-top: 40px;
+            margin-top: 25px;
         }
 
         .btn-home {
             background-color: var(--dark-pink);
             color: white;
             border: none;
-            padding: 15px 50px;
+            padding: 12px 40px;
             border-radius: 50px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             text-decoration: none;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s;
             display: inline-block;
             box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+            font-weight: 600;
         }
 
         .btn-home:hover {
-            transform: scale(1.08);
+            transform: scale(1.05);
             background-color: #e05297;
         }
 
         .footer-note {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 0.8rem;
             color: #aaa;
         }
+
+        /* Custom Scrollbar */
+        .photo-preview-container::-webkit-scrollbar { width: 5px; }
+        .photo-preview-container::-webkit-scrollbar-thumb { background: var(--primary-pink); border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div class="result-container">
-        <img src="https://via.placeholder.com/600x1800?text=Your+Result" alt="Final Result" class="photo-preview" id="finalPhoto">
+        <div class="photo-preview-container">
+            <img src="https://via.placeholder.com/600x1800?text=Loading..." alt="Final Result" class="photo-preview" id="finalPhoto">
+        </div>
 
         <div class="qr-section">
             <div class="qr-code">
-                <img src="https://via.placeholder.com/150?text=Scan+to+Download" width="100%">
+                <img id="qrImg" src="https://via.placeholder.com/150?text=Generating..." width="100%">
             </div>
-            <div class="qr-label">scan to download</div>
+            <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
         </div>
 
         <div class="action-btns">
-            <a href="index.html" class="btn-home">TAKE MORE PHOTOS</a>
+            <a href="main.html" class="btn-home">ถ่ายรูปเพิ่ม ❤️</a>
         </div>
         
-        <p class="footer-note">Scan with your phone to save the memory!</p>
+        <p class="footer-note">สแกนด้วยมือถือเพื่อเก็บความทรงจำไว้นะ!</p>
     </div>
 
     <script>
-        // --- ระบบ Falling Hearts ---
+        // --- 1. ระบบดึงรูปและสร้าง QR Code ---
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const photoUrl = urlParams.get('url');
+            
+            if (photoUrl) {
+                const finalPhoto = document.getElementById('finalPhoto');
+                const qrImg = document.getElementById('qrImg');
+                
+                // แสดงรูปภาพจริง
+                finalPhoto.src = photoUrl;
+                
+                // สร้าง QR Code จาก URL รูปภาพ (ใช้ API ของ QR Server)
+                const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(photoUrl)}`;
+                qrImg.src = qrApiUrl;
+            } else {
+                // กรณีไม่มี URL ส่งมา (อาจจะเข้าหน้านี้ตรงๆ)
+                alert("ไม่พบข้อมูลรูปภาพ กรุณากลับไปถ่ายรูปใหม่ครับ");
+                window.location.href = 'main.html';
+            }
+        };
+
+        // --- 2. ระบบ Falling Hearts (เหมือนเดิม) ---
         function createHeart() {
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
@@ -158,11 +193,6 @@
             setTimeout(() => heart.remove(), 5000);
         }
         setInterval(createHeart, 400);
-
-        // คุณสามารถดึง URL จาก Parameter มาแสดงรูปจริงได้ เช่น:
-        // const urlParams = new URLSearchParams(window.location.search);
-        // const photoUrl = urlParams.get('url');
-        // if(photoUrl) document.getElementById('finalPhoto').src = photoUrl;
     </script>
 </body>
 </html>
