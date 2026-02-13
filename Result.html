@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Your Photo - Valentine Photobooth</title>
+    <title>Download Your Photo - Owl Always Love You</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
 
@@ -18,181 +19,118 @@
             font-family: 'Kanit', sans-serif;
             background-color: var(--soft-pink);
             margin: 0;
-            overflow-x: hidden;
+            overflow: hidden; /* ล็อกหน้าจอหน้าเดียว */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            height: 100vh;
         }
 
-        /* --- Falling Hearts Animation --- */
+        /* --- Falling Hearts --- */
         .heart-particle {
-            position: fixed;
-            top: -10%;
-            color: var(--dark-pink);
-            font-size: 20px;
-            user-select: none;
-            z-index: 0;
-            opacity: 0.5;
-            animation: fall linear infinite;
+            position: fixed; top: -10%; color: var(--dark-pink);
+            font-size: 20px; user-select: none; z-index: 0;
+            opacity: 0.5; animation: fall linear infinite;
         }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
 
-        @keyframes fall {
-            to { transform: translateY(110vh) rotate(360deg); }
-        }
-
-        /* --- Result Card Container --- */
+        /* --- Main Card --- */
         .result-container {
-            position: relative;
-            z-index: 10;
-            background: white;
-            padding: 30px;
-            border-radius: 30px;
-            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.15);
+            position: relative; z-index: 10;
+            background: white; padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.2);
             text-align: center;
-            max-width: 450px;
-            width: 90%;
-            margin: 20px 0;
+            max-width: 400px; width: 85%;
+            display: flex; flex-direction: column; gap: 15px;
         }
 
         .photo-preview-container {
-            width: 100%;
-            max-height: 400px;
-            overflow-y: auto; /* เผื่อรูปมายาวแบบ Strip */
-            margin-bottom: 20px;
-            border-radius: 15px;
-            border: 4px solid #fff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            background: #f9f9f9;
+            width: 100%; height: 250px; /* ย่อขนาด Preview เพื่อประหยัดพื้นที่ */
+            overflow: hidden; border-radius: 12px;
+            background: #fdfdfd; border: 2px solid var(--soft-pink);
         }
 
-        .photo-preview {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+        .photo-preview { width: 100%; height: 100%; object-fit: contain; }
 
-        /* --- QR Section --- */
+        /* --- QR Section (Instant Render) --- */
         .qr-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 10px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
 
-        .qr-code {
-            width: 160px;
-            height: 160px;
-            background: #fff;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 2px solid var(--primary-pink);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        #qrcode {
+            padding: 10px; background: #fff;
+            border: 2px solid var(--primary-pink); border-radius: 12px;
         }
 
         .qr-label {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--navy-blue);
-            text-transform: uppercase;
-        }
-
-        .action-btns {
-            margin-top: 25px;
+            font-size: 1rem; font-weight: 600; color: var(--navy-blue);
         }
 
         .btn-home {
-            background-color: var(--dark-pink);
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: 0.3s;
-            display: inline-block;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
-            font-weight: 600;
+            background: linear-gradient(45deg, var(--dark-pink), var(--primary-pink));
+            color: white; padding: 12px 30px; border-radius: 50px;
+            text-decoration: none; font-weight: 600; display: inline-block;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); transition: 0.2s;
         }
+        .btn-home:hover { transform: scale(1.05); }
 
-        .btn-home:hover {
-            transform: scale(1.05);
-            background-color: #e05297;
-        }
-
-        .footer-note {
-            margin-top: 15px;
-            font-size: 0.8rem;
-            color: #aaa;
-        }
-
-        /* Custom Scrollbar */
-        .photo-preview-container::-webkit-scrollbar { width: 5px; }
-        .photo-preview-container::-webkit-scrollbar-thumb { background: var(--primary-pink); border-radius: 10px; }
+        .footer-note { font-size: 0.75rem; color: #aaa; margin: 0; }
     </style>
 </head>
 <body>
 
     <div class="result-container">
         <div class="photo-preview-container">
-            <img src="https://via.placeholder.com/600x1800?text=Loading..." alt="Final Result" class="photo-preview" id="finalPhoto">
+            <img id="finalPhoto" alt="Final Result" class="photo-preview">
         </div>
 
         <div class="qr-section">
-            <div class="qr-code">
-                <img id="qrImg" src="https://via.placeholder.com/150?text=Generating..." width="100%">
-            </div>
-            <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
+            <div id="qrcode"></div> <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
         </div>
 
         <div class="action-btns">
             <a href="main.html" class="btn-home">ถ่ายรูปเพิ่ม ❤️</a>
         </div>
         
-        <p class="footer-note">สแกนด้วยมือถือเพื่อเก็บความทรงจำไว้นะ!</p>
+        <p class="footer-note">สแกนเพื่อเก็บความทรงจำไว้นะ!</p>
     </div>
 
     <script>
-        // --- 1. ระบบดึงรูปและสร้าง QR Code ---
-        window.onload = () => {
+        // เริ่มทำงานทันทีไม่ต้องรอโหลดเสร็จทั้งหมด
+        document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const photoUrl = urlParams.get('url');
             
             if (photoUrl) {
-                const finalPhoto = document.getElementById('finalPhoto');
-                const qrImg = document.getElementById('qrImg');
+                // 1. แสดงรูปทันที
+                document.getElementById('finalPhoto').src = photoUrl;
                 
-                // แสดงรูปภาพจริง
-                finalPhoto.src = photoUrl;
-                
-                // สร้าง QR Code จาก URL รูปภาพ (ใช้ API ของ QR Server)
-                const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(photoUrl)}`;
-                qrImg.src = qrApiUrl;
+                // 2. สร้าง QR Code ทันทีด้วย Library (ไม่ต้องเรียก API นอก)
+                new QRCode(document.getElementById("qrcode"), {
+                    text: photoUrl,
+                    width: 130,
+                    height: 130,
+                    colorDark : "#2c3e50",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
             } else {
-                // กรณีไม่มี URL ส่งมา (อาจจะเข้าหน้านี้ตรงๆ)
-                alert("ไม่พบข้อมูลรูปภาพ กรุณากลับไปถ่ายรูปใหม่ครับ");
                 window.location.href = 'main.html';
             }
-        };
+        });
 
-        // --- 2. ระบบ Falling Hearts (เหมือนเดิม) ---
-        function createHeart() {
+        // Falling Hearts Effect
+        setInterval(() => {
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
-            heart.innerHTML = '❤️';
+            heart.innerHTML = ['❤️','💖','✨'][Math.floor(Math.random()*3)];
             heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            heart.style.opacity = Math.random() * 0.4;
-            heart.style.fontSize = (Math.random() * 15 + 10) + 'px';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
             document.body.appendChild(heart);
             setTimeout(() => heart.remove(), 5000);
-        }
-        setInterval(createHeart, 400);
+        }, 500);
     </script>
 </body>
 </html>
