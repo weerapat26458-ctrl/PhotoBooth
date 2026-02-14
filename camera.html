@@ -89,8 +89,26 @@
             border-radius: 30px; overflow: hidden; border: 10px solid white;
             box-shadow: 0 25px 50px rgba(247, 37, 133, 0.15); position: relative;
         }
-        /* แก้ไขตรงนี้: ลบ transform: scaleX(-1) ออกเพื่อให้ภาพไม่กลับด้าน */
         #video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- Overlays สำหรับฟิลเตอร์พิเศษ --- */
+        #heart-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px; height: 80px;
+            display: none; pointer-events: none; z-index: 20;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+        }
+        .haze-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(212, 163, 115, 0.15) 100%);
+            pointer-events: none; z-index: 10; opacity: 0; transition: 0.3s;
+        }
+        .canvas-texture {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/canvas-orange.png');
+            opacity: 0; pointer-events: none; z-index: 5; transition: 0.3s;
+        }
 
         .countdown-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;
@@ -116,11 +134,11 @@
         .shutter-btn:active { transform: scale(0.9); }
         .shutter-btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.6; }
 
-        .filter-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 10px; overflow-y: auto; }
+        .filter-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 10px; overflow-y: auto; }
         .filter-item { cursor: pointer; text-align: center; }
-        .filter-thumb { width: 100%; aspect-ratio: 1; border-radius: 20px; margin-bottom: 5px; border: 3px solid transparent; transition: 0.3s; }
+        .filter-thumb { width: 100%; aspect-ratio: 1; border-radius: 12px; margin-bottom: 5px; border: 3px solid transparent; transition: 0.3s; }
         .filter-item.active .filter-thumb { border-color: var(--dark-pink); transform: scale(0.95); }
-        .filter-item span { font-size: 0.8rem; font-weight: 600; color: #666; }
+        .filter-item span { font-size: 0.65rem; font-weight: 600; color: #666; display: block; line-height: 1.2; }
 
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -131,6 +149,16 @@
     </style>
 </head>
 <body>
+
+    <svg style="display: none;">
+      <defs>
+        <filter id="oil-paint">
+           <feMorphology operator="dilate" radius="2" in="SourceGraphic" result="morphed" />
+           <feGaussianBlur stdDeviation="1.5" in="morphed" result="blurred" />
+           <feComposite in="SourceGraphic" in2="blurred" operator="atop" />
+        </filter>
+      </defs>
+    </svg>
 
     <a href="layout.html" class="back-btn"><span>⬅</span> ย้อนกลับ</a>
 
@@ -168,6 +196,13 @@
             <div class="center-panel">
                 <div class="camera-frame">
                     <video id="video" autoplay playsinline></video>
+                    
+                    <svg id="heart-overlay" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <div id="haze" class="haze-overlay"></div>
+                    <div id="canvas-tex" class="canvas-texture"></div>
+
                     <div id="countdown" class="countdown-overlay"></div>
                     <div id="flash" class="flash-effect"></div>
                 </div>
@@ -190,6 +225,11 @@
     const countdownEl = document.getElementById('countdown');
     const flashEl = document.getElementById('flash');
     const shutterBtn = document.getElementById('shutterBtn');
+
+    // Overlays
+    const heartOverlay = document.getElementById('heart-overlay');
+    const hazeOverlay = document.getElementById('haze');
+    const canvasTex = document.getElementById('canvas-tex');
 
     const urlParams = new URLSearchParams(window.location.search);
     const layoutType = urlParams.get('layout') || 'strip3';
@@ -248,9 +288,25 @@
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         
-        // แก้ไขตรงนี้: ลบการ translate และ scale(-1, 1) ออก เพื่อไม่ให้รูปบันทึกแบบกลับด้าน
+        // ดึง CSS filters มาใช้
         ctx.filter = getComputedStyle(video).filter;
         ctx.drawImage(video, 0, 0);
+
+        // ถ้าเป็นฟิลเตอร์ Retro Love ให้วาดหัวใจลงในรูปที่บันทึกด้วย
+        const activeFilter = filters.find(f => f.active);
+        if (activeFilter && activeFilter.hasHeart) {
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // วาดหัวใจจำลองกลางรูป (ปรับพิกัดตามขนาด Canvas)
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const size = 60;
+            ctx.moveTo(cx, cy + size * 0.7);
+            ctx.bezierCurveTo(cx - size, cy - size / 2, cx - size * 1.5, cy + size / 3, cx, cy + size * 1.2);
+            ctx.bezierCurveTo(cx + size * 1.5, cy + size / 3, cx + size, cy - size / 2, cx, cy + size * 0.7);
+            ctx.stroke();
+        }
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         shots.push(imgData);
@@ -308,21 +364,37 @@
         window.location.href = 'customize.html';
     }
 
+    // --- รวมฟิลเตอร์ทั้ง 9 แบบ ---
     const filters = [
-        { name: 'Normal', val: 'none', color: '#fff' },
-        { name: 'Classic B&W', val: 'grayscale(100%)', color: '#555' },
-        { name: 'Vintage', val: 'sepia(60%) brightness(0.9)', color: '#c0a080' },
-        { name: 'Warm Love', val: 'sepia(20%) brightness(1.1) saturate(1.3)', color: '#ffb6c1' },
-        { name: 'Cool Blue', val: 'hue-rotate(180deg) brightness(1.05)', color: '#a2d2ff' },
-        { name: 'Dramatic', val: 'contrast(1.4) brightness(0.8)', color: '#333' }
+        { name: 'Original', val: 'none', color: '#fff' },
+        { name: 'Noir', val: 'grayscale(100%) brightness(1.1) contrast(0.9)', color: '#555' },
+        { name: 'Sweetheart', val: 'sepia(20%) brightness(1.1) saturate(1.3)', color: '#ffb6c1' },
+        { name: 'Bold', val: 'contrast(1.4) brightness(0.8)', color: '#333' },
+        { name: 'Pink Glow', val: 'brightness(1.1) contrast(1.1) saturate(1.2) sepia(10%) hue-rotate(-10deg)', color: '#ffc1cc' },
+        { name: 'Cupid Eyes', val: 'brightness(1.05) contrast(0.9) sepia(15%) saturate(1.1) blur(0.2px)', color: '#ff4d6d', hasHeart: true, hasHaze: true },
+        { name: 'Sunday Vibe', val: 'contrast(0.95) brightness(1.1) saturate(1.1) sepia(5%)', color: '#f4e1c1' },
+        { name: 'Tokyo Film', val: 'contrast(1.1) brightness(1.0) hue-rotate(-10deg) sepia(5%)', color: '#c7d8c6' },
+        { name: 'Masterpiece', val: 'url(#oil-paint) brightness(1.1) saturate(1.3)', color: '#fb5607', isArt: true }
     ];
     
     const filterGrid = document.getElementById('filterGrid');
     filters.forEach((f, idx) => {
         const div = document.createElement('div'); div.className = `filter-item ${idx===0?'active':''}`;
+        if(idx === 0) f.active = true;
+        
         div.innerHTML = `<div class="filter-thumb" style="background:${f.color}"></div><span>${f.name}</span>`;
         div.onclick = () => {
+            // Reset filters
+            filters.forEach(filter => filter.active = false);
+            f.active = true;
+
             video.style.filter = f.val;
+            
+            // Toggle Overlays
+            heartOverlay.style.display = f.hasHeart ? 'block' : 'none';
+            hazeOverlay.style.opacity = f.hasHaze ? '1' : '0';
+            canvasTex.style.opacity = f.isArt ? '0.1' : '0';
+
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             div.classList.add('active');
         };
