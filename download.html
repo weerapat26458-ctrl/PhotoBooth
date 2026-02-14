@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Your Photo - Happy Owl</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
+        :root { --primary: #f72585; --soft: #fff5f7; }
+        body { font-family: 'Kanit', sans-serif; background: var(--soft); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 50px; }
+        .header { margin-top: 40px; text-align: center; }
+        .header h1 { font-family: 'Pacifico', cursive; color: var(--primary); font-size: 2.5rem; margin: 0; }
+        .photo-card { background: white; padding: 12px; border-radius: 20px; box-shadow: 0 10px 30px rgba(247, 37, 133, 0.1); width: 85%; max-width: 400px; margin-top: 30px; }
+        .photo-card img { width: 100%; border-radius: 12px; display: block; }
+        .action-group { width: 85%; max-width: 400px; margin-top: 30px; display: flex; flex-direction: column; gap: 15px; }
+        .btn { padding: 16px; border-radius: 50px; border: none; font-family: 'Kanit'; font-weight: 600; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; transition: 0.3s; }
+        .btn-share { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(247, 37, 133, 0.2); }
+        .btn-save { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .tip { font-size: 0.8rem; color: #999; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Happy Owl 🦉</h1>
+    <div style="color: #888;">Valentine's Memory</div>
+</div>
+
+<div class="photo-card">
+    <img id="userImg" src="" alt="Loading your photo...">
+</div>
+
+<div class="tip">💡 กดค้างที่รูปภาพเพื่อบันทึกไปที่แอป Photos</div>
+
+<div class="action-group">
+    <button class="btn btn-share" onclick="shareToStory()">
+        <span>📤</span> แชร์ลง Story / ส่งให้เพื่อน
+    </button>
+    <a href="index.html" class="btn btn-save">ไปหน้าแรก</a>
+</div>
+
+<div style="margin-top: 40px; color: #ccc; font-size: 0.8rem;">JFF CORP's Project</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const photoUrl = urlParams.get('url');
+
+    window.onload = () => {
+        if (photoUrl) {
+            document.getElementById('userImg').src = photoUrl;
+        } else {
+            alert("ไม่พบลิงก์รูปภาพของคุณ!");
+        }
+    };
+
+    async function shareToStory() {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'My Happy Owl Moment 🦉💖',
+                    text: 'ดูรูปสติ๊กเกอร์ของฉันจากงาน Valentine!',
+                    url: photoUrl
+                });
+            } catch (err) {
+                console.log('User cancelled share');
+            }
+        } else {
+            navigator.clipboard.writeText(photoUrl);
+            alert("คัดลอกลิงก์เรียบร้อย! สามารถนำไปวางในแอปแชทได้เลยครับ");
+        }
+    }
+</script>
+</body>
+</html>
