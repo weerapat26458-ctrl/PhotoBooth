@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Test Studio - Happy Owl</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
+
+        :root {
+            --primary: #f72585; /* ธีมชมพูจากโปรเจกต์ของคุณ */
+            --bg: #fff5f7;
+            --glass: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 100vh;
+        }
+
+        .test-card {
+            background: white; padding: 25px; border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(247, 37, 133, 0.15);
+            text-align: center; max-width: 400px; width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 10px; }
+        
+        .mock-img-wrap {
+            width: 100%; border-radius: 15px; overflow: hidden;
+            border: 2px solid var(--bg); margin-bottom: 20px;
+        }
+        .mock-img-wrap img { width: 100%; display: block; }
+
+        .btn-share {
+            background: var(--primary); color: white; border: none;
+            padding: 16px 32px; border-radius: 50px; font-family: 'Kanit';
+            font-weight: 600; font-size: 1.1rem; cursor: pointer;
+            width: 100%; display: flex; align-items: center;
+            justify-content: center; gap: 10px; transition: 0.3s;
+        }
+        .btn-share:active { transform: scale(0.95); }
+
+        .status-msg { margin-top: 15px; font-size: 0.85rem; color: #999; }
+
+        /* Falling Hearts */
+        .heart { position: fixed; color: var(--primary); z-index: -1; animation: floatUp 10s infinite linear; }
+        @keyframes floatUp {
+            from { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            50% { opacity: 0.5; }
+            to { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="test-card">
+    <h1>Share Test 🦉</h1>
+    <p style="color: #666; margin-bottom: 20px;">ทดสอบระบบแชร์ลง Social Media</p>
+    
+    <div class="mock-img-wrap">
+        <img id="testImg" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=640&h=853&auto=format&fit=crop" alt="Test Image">
+    </div>
+
+    <button class="btn-share" onclick="testShare()">
+        <span>📤</span> แชร์ลง Instagram / Line
+    </button>
+
+    <div id="msg" class="status-msg">พร้อมสำหรับการทดสอบ</div>
+</div>
+
+<script>
+    // สมมติ URL ของรูปภาพที่จะแชร์
+    const mockPhotoUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=640&h=853&auto=format&fit=crop";
+
+    async function testShare() {
+        const msg = document.getElementById('msg');
+        
+        // ตรวจสอบ Web Share API
+        if (navigator.share) {
+            try {
+                msg.innerText = "กำลังเรียกหน้าต่างแชร์...";
+                await navigator.share({
+                    title: 'Happy Owl Moment 🦉💖',
+                    text: 'มาลองเล่นตู้สติ๊กเกอร์ Happy Owl กัน!',
+                    url: mockPhotoUrl
+                });
+                msg.innerText = "แชร์สำเร็จ!";
+            } catch (err) {
+                msg.innerText = "ยกเลิกการแชร์";
+                console.log('Error sharing:', err);
+            }
+        } else {
+            // กรณี Browser ไม่รองรับ (เช่น บนคอม)
+            msg.innerText = "ไม่รองรับ Web Share API กำลังคัดลอกลิงก์...";
+            navigator.clipboard.writeText(mockPhotoUrl);
+            alert("คัดลอกลิงก์ลงคลิปบอร์ดแล้ว! (Browser นี้ไม่รองรับ Native Share)");
+        }
+    }
+
+    // สร้างหัวใจลอยๆ ตามที่คุณชอบ
+    setInterval(() => {
+        const h = document.createElement('div');
+        h.className = 'heart'; h.innerHTML = '❤️';
+        h.style.left = Math.random() * 100 + 'vw';
+        h.style.fontSize = (15 + Math.random() * 20) + 'px';
+        h.style.animationDuration = (5 + Math.random() * 10) + 's';
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 10000);
+    }, 1500);
+</script>
+</body>
+</html>
