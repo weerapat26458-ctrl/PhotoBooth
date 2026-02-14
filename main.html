@@ -1,199 +1,3 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Event : AI Event : Owl Always Love You - Memory Wall</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
-
-        :root {
-            --bg-pink: #fff0f3;
-            --paper-white: #ffffff;
-            --accent-pink: #ff4d6d;
-            --dark-pink: #f72585;
-            --soft-pink: #ffb3c1;
-            --glass: rgba(255, 255, 255, 0.6);
-        }
-
-        body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            background-color: var(--bg-pink);
-            background-image: radial-gradient(var(--soft-pink) 1px, transparent 1px);
-            background-size: 30px 30px; /* ลดขนาดจุด background */
-            overflow: hidden;
-            font-family: 'Kanit', sans-serif;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- Header Section (Compact Scale) --- */
-        .main-header {
-            text-align: center;
-            padding: 20px 10px 15px; /* ลด Padding */
-            position: relative;
-            z-index: 1000;
-            background: linear-gradient(to bottom, var(--bg-pink) 70%, transparent);
-        }
-
-        .main-header h1 {
-            font-family: 'Pacifico', cursive;
-            font-size: 3rem; /* ลดขนาดจาก 4.5rem */
-            color: var(--dark-pink);
-            margin: 0;
-            text-shadow: 2px 2px 8px rgba(247, 37, 133, 0.2);
-            line-height: 1.1;
-        }
-
-        .main-header p {
-            font-size: 1.1rem; /* ลดขนาดจาก 1.5rem */
-            color: #666;
-            margin: 5px 0 0;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-
-        /* --- LOGO มุมขวาบน (Scaled Down) --- */
-        .brand-logo-fixed {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            z-index: 1100;
-            pointer-events: none;
-        }
-        .brand-logo-fixed img {
-            height: 60px; /* ลดขนาดจาก 90px */
-            width: auto;
-            opacity: 0.9;
-            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.1));
-        }
-
-        #wall {
-            position: relative;
-            flex: 1;
-            width: 100%;
-            overflow: hidden;
-            z-index: 1;
-            perspective: 1200px;
-        }
-
-        .floating-heart-bg {
-            position: absolute;
-            color: var(--soft-pink);
-            opacity: 0;
-            pointer-events: none;
-            top: -10vh;
-            animation: floatDown var(--d) linear infinite;
-            z-index: 0;
-        }
-
-        @keyframes floatDown {
-            0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
-            100% { transform: translateY(110vh) scale(1) rotate(360deg); opacity: 0; }
-        }
-
-        /* --- Footer Section (Compact Scale) --- */
-        .footer-bar {
-            height: 120px; /* ลดจาก 180px */
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            display: flex; justify-content: center; align-items: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.5);
-            z-index: 1000;
-        }
-
-        .btn-start {
-            padding: 15px 50px; /* ลดจาก 25/90 */
-            font-size: 22px; /* ลดจาก 36px */
-            font-weight: bold;
-            color: white;
-            background: linear-gradient(45deg, var(--dark-pink), var(--accent-pink));
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.2);
-            transition: all 0.3s ease;
-            font-family: 'Kanit', sans-serif;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-start:hover { transform: scale(1.05); }
-
-        /* --- Photo Items (Downscaled) --- */
-        .photo-item {
-            position: absolute;
-            background: var(--paper-white);
-            padding: 8px 8px 25px 8px; /* ลด padding */
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            transition: all 1s ease-out;
-            transform-origin: top center;
-            animation: windSway var(--sway-dur) ease-in-out infinite alternate var(--sway-delay);
-            opacity: 0;
-            z-index: 5;
-            border-radius: 3px;
-        }
-        
-        .photo-item.visible { opacity: 1; }
-        .p-grid4 { width: 140px; height: 200px; } /* ลดขนาดจาก 180x260 */
-
-        @keyframes windSway {
-            0%   { transform: rotate(calc(var(--r) - 2deg)); }
-            100% { transform: rotate(calc(var(--r) + 2deg)); }
-        }
-
-        .photo-item::before {
-            content: "";
-            position: absolute;
-            top: -12px; left: 50%;
-            transform: translateX(-50%) rotate(var(--tape-r));
-            width: 40px; height: 18px; /* ลดขนาดเทป */
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(2px);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .photo-item img { 
-            width: 100%; height: 100%; 
-            object-fit: cover;
-            display: block; 
-            background: #fafafa;
-        }
-        
-        .loading-text {
-            position: absolute; width: 100%; top: 40%; text-align: center;
-            color: var(--dark-pink); font-size: 1.4rem; font-family: 'Pacifico';
-            opacity: 0.5;
-        }
-    </style>
-</head>
-<body>
-
-<div class="brand-logo-fixed">
-    <img src="assets/Logo.png" alt="Logo">
-</div>
-
-<div class="main-header">
-    <h1>AI Event : Owl Always Love You</h1>
-    <p>ร่วมเก็บความทรงจำดีดีด้วยกัน</p>
-</div>
-
-<div id="wall">
-    <div class="loading-text" id="loading">Gathering memories...</div>
-</div>
-
-<div class="footer-bar">
-    <a href="layout.html" class="btn-start">
-        <span>📸</span> เริ่มถ่ายรูป
-    </a>
-</div>
-
 <script>
     const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
     const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
@@ -202,37 +6,42 @@
     const wall = document.getElementById('wall');
     const cols = 6;
     const rows = 3;
+    const maxOnScreen = cols * rows; // 18 รูป
+    
     let gridSlots = [];
-    let currentPhotoIndex = 0;
+    let photoPool = []; // เก็บรูปทั้งหมดที่ดึงมา
+    let activePhotos = new Map(); // เก็บว่า Slot ไหนโชว์รูป ID อะไรอยู่
 
     function initGrid() {
         gridSlots = [];
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                gridSlots.push({ r, c });
+                gridSlots.push({ r, c, index: r * cols + c });
             }
         }
         gridSlots.sort(() => Math.random() - 0.5);
     }
 
-    function placePhotoOnWall(photoUrl, isNew = false) {
-        if (!photoUrl) return; 
+    function placePhotoOnWall(photo, slot, isNew = false) {
+        if (!photo || !slot) return;
         
-        if (currentPhotoIndex >= gridSlots.length) currentPhotoIndex = 0; 
-        
-        const slot = gridSlots[currentPhotoIndex];
+        // ลบรูปเก่าใน Slot นั้นออกก่อน (ถ้ามี)
+        const oldItem = document.querySelector(`.slot-${slot.index}`);
+        if (oldItem) {
+            oldItem.classList.remove('visible');
+            setTimeout(() => oldItem.remove(), 1000);
+        }
+
         const item = document.createElement('div');
-        
-        item.className = `photo-item p-grid4`;
+        item.className = `photo-item p-grid4 slot-${slot.index}`;
 
         const cellW = window.innerWidth / cols;
-        const cellH = (window.innerHeight - 200) / rows; /* ปรับ offset ตาม Footer ที่เล็กลง */
-        const offsetX = (Math.random() - 0.5) * (cellW * 0.5);
-        const offsetY = (Math.random() - 0.5) * (cellH * 0.5);
+        const cellH = (window.innerHeight - 200) / rows;
+        const offsetX = (Math.random() - 0.5) * (cellW * 0.4);
+        const offsetY = (Math.random() - 0.5) * (cellH * 0.4);
         const rotate = (Math.random() - 0.5) * 15;
         const tapeRotate = (Math.random() - 0.5) * 30;
 
-        /* ปรับ Offset กึ่งกลางให้ตรงกับขนาดใหม่ (140/2 = 70, 200/2 = 100) */
         item.style.left = `${(slot.c * cellW) + (cellW/2) + offsetX - 70}px`;
         item.style.top = `${(slot.r * cellH) + (cellH/2) + offsetY - 100}px`;
         item.style.setProperty('--r', `${rotate}deg`);
@@ -240,39 +49,71 @@
         item.style.setProperty('--sway-dur', (4 + Math.random() * 4) + 's');
         item.style.setProperty('--sway-delay', -(Math.random() * 5) + 's');
         
-        item.innerHTML = `<img src="${photoUrl}" alt="Memory">`;
+        item.innerHTML = `<img src="${photo.preview_url}" alt="Memory">`;
         wall.appendChild(item);
         
-        setTimeout(() => { item.classList.add('visible'); }, isNew ? 100 : currentPhotoIndex * 150);
-        currentPhotoIndex++;
+        // บันทึกว่า Slot นี้กำลังโชว์รูปใบนี้
+        activePhotos.set(slot.index, photo.preview_url);
+
+        setTimeout(() => { item.classList.add('visible'); }, isNew ? 100 : 300);
     }
 
     async function fetchPhotos() {
         initGrid();
+        // ดึงมาเยอะหน่อย เช่น 60 รูปเพื่อเอามาวนลูป
         const { data: photos, error } = await supabaseClient
             .from('photos')
             .select('preview_url')
             .eq('is_active', true)
             .order('created_at', { ascending: false })
-            .limit(18);
+            .limit(60); 
 
         document.getElementById('loading').style.display = 'none';
 
-        if (photos) {
-            photos.forEach((photo) => {
-                if (photo.preview_url) {
-                    placePhotoOnWall(photo.preview_url);
-                }
-            });
+        if (photos && photos.length > 0) {
+            photoPool = photos;
+            
+            // เริ่มต้น: วางรูปให้เต็ม Grid (ไม่เกินจำนวนรูปที่มี)
+            const initialCount = Math.min(photos.length, maxOnScreen);
+            for (let i = 0; i < initialCount; i++) {
+                placePhotoOnWall(photoPool[i], gridSlots[i]);
+            }
+
+            // ถ้ามีรูปใน Pool มากกว่าที่โชว์บนจอ ให้เริ่มวนลูป
+            if (photoPool.length > maxOnScreen) {
+                startCycling();
+            }
         }
+    }
+
+    function startCycling() {
+        // ทุกๆ 5 วินาที สุ่มเปลี่ยน 1 รูป
+        setInterval(() => {
+            // 1. สุ่มเลือก Slot ที่จะเปลี่ยน
+            const randomSlotIndex = Math.floor(Math.random() * maxOnScreen);
+            const slot = gridSlots.find(s => s.index === randomSlotIndex);
+            
+            // 2. สุ่มหารูปจาก Pool ที่ไม่ได้โชว์อยู่บนจอ
+            const currentOnScreen = Array.from(activePhotos.values());
+            const availablePhotos = photoPool.filter(p => !currentOnScreen.includes(p.preview_url));
+            
+            if (availablePhotos.length > 0) {
+                const nextPhoto = availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
+                placePhotoOnWall(nextPhoto, slot);
+            }
+        }, 5000); // ปรับเวลาตรงนี้ (5000 = 5 วินาที)
     }
 
     function subscribeToNewPhotos() {
         supabaseClient
             .channel('public:photos')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'photos' }, payload => {
-                if (payload.new.preview_url) {
-                    placePhotoOnWall(payload.new.preview_url, true);
+                if (payload.new.preview_url && payload.new.is_active) {
+                    // เพิ่มรูปใหม่เข้า Pool (ไว้บนสุด)
+                    photoPool.unshift(payload.new);
+                    // สุ่มเปลี่ยน Slot หนึ่งทันทีเพื่อให้รูปใหม่ขึ้นโชว์
+                    const randomSlot = gridSlots[Math.floor(Math.random() * gridSlots.length)];
+                    placePhotoOnWall(payload.new, randomSlot, true);
                 }
             })
             .subscribe();
@@ -282,6 +123,7 @@
         fetchPhotos();
         subscribeToNewPhotos();
         
+        // Heart Animation
         setInterval(() => {
             const heart = document.createElement('div');
             heart.className = 'floating-heart-bg';
@@ -293,6 +135,3 @@
         }, 1200);
     };
 </script>
-
-</body>
-</html>
