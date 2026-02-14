@@ -3,134 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Your Photo - Owl Always Love You</title>
+    <title>Result - Happy Owl Photobooth</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
-
-        :root {
-            --primary-pink: #ffb6c1;
-            --dark-pink: #ff69b4;
-            --soft-pink: #fff0f3;
-            --navy-blue: #2c3e50;
-        }
-
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: var(--soft-pink);
-            margin: 0;
-            overflow: hidden; /* ล็อกหน้าจอหน้าเดียว */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-
-        /* --- Falling Hearts --- */
-        .heart-particle {
-            position: fixed; top: -10%; color: var(--dark-pink);
-            font-size: 20px; user-select: none; z-index: 0;
-            opacity: 0.5; animation: fall linear infinite;
-        }
-        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
-
-        /* --- Main Card --- */
-        .result-container {
-            position: relative; z-index: 10;
-            background: white; padding: 25px;
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.2);
-            text-align: center;
-            max-width: 400px; width: 85%;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-
-        .photo-preview-container {
-            width: 100%; height: 250px; /* ย่อขนาด Preview เพื่อประหยัดพื้นที่ */
-            overflow: hidden; border-radius: 12px;
-            background: #fdfdfd; border: 2px solid var(--soft-pink);
-        }
-
-        .photo-preview { width: 100%; height: 100%; object-fit: contain; }
-
-        /* --- QR Section (Instant Render) --- */
-        .qr-section {
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-        }
-
-        #qrcode {
-            padding: 10px; background: #fff;
-            border: 2px solid var(--primary-pink); border-radius: 12px;
-        }
-
-        .qr-label {
-            font-size: 1rem; font-weight: 600; color: var(--navy-blue);
-        }
-
-        .btn-home {
-            background: linear-gradient(45deg, var(--dark-pink), var(--primary-pink));
-            color: white; padding: 12px 30px; border-radius: 50px;
-            text-decoration: none; font-weight: 600; display: inline-block;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); transition: 0.2s;
-        }
-        .btn-home:hover { transform: scale(1.05); }
-
-        .footer-note { font-size: 0.75rem; color: #aaa; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
+        :root { --primary: #f72585; --bg: #fff0f3; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(247, 37, 133, 0.15); text-align: center; max-width: 500px; width: 90%; }
+        h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 20px; font-size: 2.5rem; }
+        #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 2px solid var(--bg); }
+        .qr-container { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
+        #qrcode { padding: 10px; background: white; border-radius: 15px; border: 2px solid var(--primary); }
+        #status { font-weight: 600; color: #888; margin-bottom: 10px; }
+        .btn-done { background: var(--primary); color: white; padding: 12px 40px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 20px; font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <div class="result-container">
-        <div class="photo-preview-container">
-            <img id="finalPhoto" alt="Final Result" class="photo-preview">
-        </div>
-
-        <div class="qr-section">
-            <div id="qrcode"></div> <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
-        </div>
-
-        <div class="action-btns">
-            <a href="main.html" class="btn-home">ถ่ายรูปเพิ่ม ❤️</a>
-        </div>
-        
-        <p class="footer-note">สแกนเพื่อเก็บความทรงจำไว้นะ!</p>
+<div class="card">
+    <h1>Happy Owl 🦉</h1>
+    <div id="status">กำลังบันทึกความทรงจำของคุณ...</div>
+    <img id="final-preview" alt="Processing...">
+    
+    <div class="qr-container" id="qr-wrap" style="display: none;">
+        <div id="qrcode"></div>
+        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">สแกนเพื่อรับรูปเข้ามือถือ ✨</div>
     </div>
 
-    <script>
-        // เริ่มทำงานทันทีไม่ต้องรอโหลดเสร็จทั้งหมด
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const photoUrl = urlParams.get('url');
-            
-            if (photoUrl) {
-                // 1. แสดงรูปทันที
-                document.getElementById('finalPhoto').src = photoUrl;
-                
-                // 2. สร้าง QR Code ทันทีด้วย Library (ไม่ต้องเรียก API นอก)
-                new QRCode(document.getElementById("qrcode"), {
-                    text: photoUrl,
-                    width: 130,
-                    height: 130,
-                    colorDark : "#2c3e50",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            } else {
-                window.location.href = 'main.html';
-            }
-        });
+    <a href="index.html" class="btn-done">กลับหน้าแรก</a>
+</div>
 
-        // Falling Hearts Effect
-        setInterval(() => {
-            const heart = document.createElement('div');
-            heart.classList.add('heart-particle');
-            heart.innerHTML = ['❤️','💖','✨'][Math.floor(Math.random()*3)];
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 5000);
-        }, 500);
-    </script>
+<script>
+    const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
+    const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    window.onload = async () => {
+        const rawPhoto = localStorage.getItem('raw_photo');
+        if (!rawPhoto) return;
+
+        document.getElementById('final-preview').src = rawPhoto;
+        
+        // 1. แปลงรูปจาก LocalStorage เป็น Blob
+        const blob = await fetch(rawPhoto).then(res => res.blob());
+        const fileName = `happy-owl-${Date.now()}.png`;
+        const filePath = `results/${fileName}`;
+
+        // 2. อัปโหลดไปที่ Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('photobooth')
+            .upload(filePath, blob, { contentType: 'image/png' });
+
+        if (error) {
+            document.getElementById('status').innerText = "เกิดข้อผิดพลาดในการบันทึก!";
+            return;
+        }
+
+        // 3. ดึง Public URL
+        const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
+
+        // 4. สร้างลิงก์ไปยังหน้า download.html (ฝั่ง Client)
+        const downloadPageUrl = `${window.location.origin}/download.html?url=${encodeURIComponent(publicUrl)}`;
+
+        // 5. แสดง QR Code
+        document.getElementById('status').innerText = "เรียบร้อยแล้ว!";
+        document.getElementById('qr-wrap').style.display = 'flex';
+        new QRCode(document.getElementById("qrcode"), {
+            text: downloadPageUrl,
+            width: 140,
+            height: 140,
+            colorDark : "#f72585",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    };
+</script>
 </body>
 </html>
