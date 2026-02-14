@@ -1,3 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Event : AI Event : Owl Always Love You - Memory Wall</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
+
+        :root {
+            --bg-pink: #fff0f3;
+            --paper-white: #ffffff;
+            --accent-pink: #ff4d6d;
+            --dark-pink: #f72585;
+            --soft-pink: #ffb3c1;
+            --glass: rgba(255, 255, 255, 0.6);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-pink);
+            background-image: radial-gradient(var(--soft-pink) 1px, transparent 1px);
+            background-size: 30px 30px; /* ลดขนาดจุด background */
+            overflow: hidden;
+            font-family: 'Kanit', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header Section (Compact Scale) --- */
+        .main-header {
+            text-align: center;
+            padding: 20px 10px 15px; /* ลด Padding */
+            position: relative;
+            z-index: 1000;
+            background: linear-gradient(to bottom, var(--bg-pink) 70%, transparent);
+        }
+
+        .main-header h1 {
+            font-family: 'Pacifico', cursive;
+            font-size: 3rem; /* ลดขนาดจาก 4.5rem */
+            color: var(--dark-pink);
+            margin: 0;
+            text-shadow: 2px 2px 8px rgba(247, 37, 133, 0.2);
+            line-height: 1.1;
+        }
+
+        .main-header p {
+            font-size: 1.1rem; /* ลดขนาดจาก 1.5rem */
+            color: #666;
+            margin: 5px 0 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* --- LOGO มุมขวาบน (Scaled Down) --- */
+        .brand-logo-fixed {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 1100;
+            pointer-events: none;
+        }
+        .brand-logo-fixed img {
+            height: 60px; /* ลดขนาดจาก 90px */
+            width: auto;
+            opacity: 0.9;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.1));
+        }
+
+        #wall {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            z-index: 1;
+            perspective: 1200px;
+        }
+
+        .floating-heart-bg {
+            position: absolute;
+            color: var(--soft-pink);
+            opacity: 0;
+            pointer-events: none;
+            top: -10vh;
+            animation: floatDown var(--d) linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes floatDown {
+            0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(110vh) scale(1) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Footer Section (Compact Scale) --- */
+        .footer-bar {
+            height: 120px; /* ลดจาก 180px */
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 1000;
+        }
+
+        .btn-start {
+            padding: 15px 50px; /* ลดจาก 25/90 */
+            font-size: 22px; /* ลดจาก 36px */
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, var(--dark-pink), var(--accent-pink));
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.2);
+            transition: all 0.3s ease;
+            font-family: 'Kanit', sans-serif;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-start:hover { transform: scale(1.05); }
+
+        /* --- Photo Items (Downscaled) --- */
+        .photo-item {
+            position: absolute;
+            background: var(--paper-white);
+            padding: 8px 8px 25px 8px; /* ลด padding */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 1s ease-out;
+            transform-origin: top center;
+            animation: windSway var(--sway-dur) ease-in-out infinite alternate var(--sway-delay);
+            opacity: 0;
+            z-index: 5;
+            border-radius: 3px;
+        }
+        
+        .photo-item.visible { opacity: 1; }
+        .p-grid4 { width: 140px; height: 200px; } /* ลดขนาดจาก 180x260 */
+
+        @keyframes windSway {
+            0%   { transform: rotate(calc(var(--r) - 2deg)); }
+            100% { transform: rotate(calc(var(--r) + 2deg)); }
+        }
+
+        .photo-item::before {
+            content: "";
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%) rotate(var(--tape-r));
+            width: 40px; height: 18px; /* ลดขนาดเทป */
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .photo-item img { 
+            width: 100%; height: 100%; 
+            object-fit: cover;
+            display: block; 
+            background: #fafafa;
+        }
+        
+        .loading-text {
+            position: absolute; width: 100%; top: 40%; text-align: center;
+            color: var(--dark-pink); font-size: 1.4rem; font-family: 'Pacifico';
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="brand-logo-fixed">
+    <img src="assets/Logo.png" alt="Logo">
+</div>
+
+<div class="main-header">
+    <h1>AI Event : Owl Always Love You</h1>
+    <p>ร่วมเก็บความทรงจำดีดีด้วยกัน</p>
+</div>
+
+<div id="wall">
+    <div class="loading-text" id="loading">Gathering memories...</div>
+</div>
+
+<div class="footer-bar">
+    <a href="layout.html" class="btn-start">
+        <span>📸</span> เริ่มถ่ายรูป
+    </a>
+</div>
+
 <script>
     const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
     const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
@@ -135,3 +331,6 @@
         }, 1200);
     };
 </script>
+
+</body>
+</html>
