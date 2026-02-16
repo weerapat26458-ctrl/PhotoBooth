@@ -3,119 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Result - Happy Owl Photobooth</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Download Your Photo - Owl Always Love You</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
-        :root { --primary: #f72585; --secondary: #7209b7; --bg: #fff0f3; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
-        
-        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(247,37,133,0.15); text-align: center; max-width: 450px; width: 90%; animation: fadeIn 0.8s ease; }
-        h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 15px; font-size: 2.5rem; }
-        #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 3px solid #f8f9fa; max-height: 300px; object-fit: contain; }
-        
-        .qr-section { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
-        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); }
-        
-        #status { font-weight: 600; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .loader { width: 18px; height: 18px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
 
-        .btn-done { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; padding: 12px 40px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 20px; font-weight: 600; transition: 0.3s; }
-        .btn-done:hover { transform: scale(1.05); }
+        :root {
+            --primary-pink: #ffb6c1;
+            --dark-pink: #ff69b4;
+            --soft-pink: #fff0f3;
+            --navy-blue: #2c3e50;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--soft-pink);
+            margin: 0;
+            overflow: hidden; /* ล็อกหน้าจอหน้าเดียว */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* --- Falling Hearts --- */
+        .heart-particle {
+            position: fixed; top: -10%; color: var(--dark-pink);
+            font-size: 20px; user-select: none; z-index: 0;
+            opacity: 0.5; animation: fall linear infinite;
+        }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+        /* --- Main Card --- */
+        .result-container {
+            position: relative; z-index: 10;
+            background: white; padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.2);
+            text-align: center;
+            max-width: 400px; width: 85%;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .photo-preview-container {
+            width: 100%; height: 250px; /* ย่อขนาด Preview เพื่อประหยัดพื้นที่ */
+            overflow: hidden; border-radius: 12px;
+            background: #fdfdfd; border: 2px solid var(--soft-pink);
+        }
+
+        .photo-preview { width: 100%; height: 100%; object-fit: contain; }
+
+        /* --- QR Section (Instant Render) --- */
+        .qr-section {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+
+        #qrcode {
+            padding: 10px; background: #fff;
+            border: 2px solid var(--primary-pink); border-radius: 12px;
+        }
+
+        .qr-label {
+            font-size: 1rem; font-weight: 600; color: var(--navy-blue);
+        }
+
+        .btn-home {
+            background: linear-gradient(45deg, var(--dark-pink), var(--primary-pink));
+            color: white; padding: 12px 30px; border-radius: 50px;
+            text-decoration: none; font-weight: 600; display: inline-block;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); transition: 0.2s;
+        }
+        .btn-home:hover { transform: scale(1.05); }
+
+        .footer-note { font-size: 0.75rem; color: #aaa; margin: 0; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Happy Owl 🦉</h1>
-    <div id="status">
-        <div class="loader" id="loader"></div>
-        <span id="status-text">กำลังบันทึกความทรงจำ...</span>
-    </div>
-    
-    <img id="final-preview" src="" alt="Processing...">
-    
-    <div class="qr-section" id="qr-wrap">
-        <div id="qrcode"></div>
-        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">✨ สแกนเพื่อดูรูปภาพและรับสิทธิ์ ✨</div>
-    </div>
+    <div class="result-container">
+        <div class="photo-preview-container">
+            <img id="finalPhoto" alt="Final Result" class="photo-preview">
+        </div>
 
-    <a href="main.html" class="btn-done">กลับหน้าแรก</a>
-</div>
+        <div class="qr-section">
+            <div id="qrcode"></div> <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
+        </div>
 
-<script>
-    const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
-    const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    function dataURLtoBlob(dataurl) {
-        let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-        while(n--) { u8arr[n] = bstr.charCodeAt(n); }
-        return new Blob([u8arr], {type:mime});
-    }
-
-    window.onload = async () => {
-        const rawPhoto = localStorage.getItem('raw_photo');
-        if (!rawPhoto) {
-            document.getElementById('status-text').innerText = "ไม่พบรูปถ่าย!";
-            document.getElementById('loader').style.display = 'none';
-            return;
-        }
-
-        document.getElementById('final-preview').src = rawPhoto;
+        <div class="action-btns">
+            <a href="main.html" class="btn-home">ถ่ายรูปเพิ่ม ❤️</a>
+        </div>
         
-        try {
-            const blob = dataURLtoBlob(rawPhoto);
-            const fileName = `happy-owl-${Date.now()}.png`;
-            const filePath = `results/${fileName}`;
+        <p class="footer-note">สแกนเพื่อเก็บความทรงจำไว้นะ!</p>
+    </div>
 
-            // 1. Upload to Supabase
-            const { data, error } = await supabase.storage
-                .from('photobooth')
-                .upload(filePath, blob, { contentType: 'image/png' });
-
-            if (error) throw error;
-
-            // 2. Get Public URL (ลิงก์ตรงของรูปภาพ)
-            const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
-
-            // 3. ปรับสถานะและแสดง QR Code
-            document.getElementById('status-text').innerText = "ถ่ายสวยมาก! เรียบร้อยแล้ว";
-            document.getElementById('loader').style.display = 'none';
+    <script>
+        // เริ่มทำงานทันทีไม่ต้องรอโหลดเสร็จทั้งหมด
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const photoUrl = urlParams.get('url');
             
-            const qrWrap = document.getElementById('qr-wrap');
-            qrWrap.style.display = 'flex';
-            
-            const qrcodeContainer = document.getElementById("qrcode");
-            qrcodeContainer.innerHTML = "";
-
-            // สร้าง QR Code ชี้ไปที่ publicUrl ของรูปโดยตรง
-            setTimeout(() => {
-                new QRCode(qrcodeContainer, {
-                    text: publicUrl, // ลิงก์ตรงของรูป
-                    width: 160,
-                    height: 160,
-                    colorDark : "#f72585",
+            if (photoUrl) {
+                // 1. แสดงรูปทันที
+                document.getElementById('finalPhoto').src = photoUrl;
+                
+                // 2. สร้าง QR Code ทันทีด้วย Library (ไม่ต้องเรียก API นอก)
+                new QRCode(document.getElementById("qrcode"), {
+                    text: photoUrl,
+                    width: 130,
+                    height: 130,
+                    colorDark : "#2c3e50",
                     colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.M // ปรับเป็น Level M เพื่อให้สแกนง่ายขึ้นสำหรับลิงก์ยาว
+                    correctLevel : QRCode.CorrectLevel.H
                 });
-            }, 50);
+            } else {
+                window.location.href = 'main.html';
+            }
+        });
 
-            // แจ้งเตือนสิทธิพิเศษที่หน้าตู้แทน (เพราะลูกค้าจะไม่ได้ผ่านหน้า download.html แล้ว)
-            setTimeout(() => {
-                alert("บันทึกรูปเรียบร้อย! อย่าลืมสแกนรับรูปและรับลูกอมที่เคาน์เตอร์นะคะ 🍬🦉");
-            }, 500);
-
-        } catch (err) {
-            console.error(err);
-            document.getElementById('status-text').innerText = "เกิดข้อผิดพลาด!";
-            document.getElementById('loader').style.display = 'none';
-        }
-    };
-</script>
+        // Falling Hearts Effect
+        setInterval(() => {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = ['❤️','💖','✨'][Math.floor(Math.random()*3)];
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }, 500);
+    </script>
 </body>
 </html>
