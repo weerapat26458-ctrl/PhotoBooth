@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customize Frame - Valentine Photobooth</title>
+    <title>Customize Frame - Owl Always Love You</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
@@ -19,8 +19,8 @@
             overflow: hidden;
         }
 
-        .header { margin-top: 10px; text-align: center; color: #ff69b4; }
-        .header h1 { margin: 0; font-size: 1.5rem; }
+        .header { margin-top: 15px; text-align: center; color: #ff69b4; }
+        .header h1 { margin: 0; font-size: 1.8rem; }
 
         .preview-area {
             flex-grow: 1;
@@ -36,16 +36,17 @@
 
         canvas {
             max-width: 100%;
-            max-height: 60vh;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 55vh;
+            box-shadow: 0 10px 40px rgba(247, 37, 133, 0.2);
             background: white;
+            border-radius: 10px;
         }
 
         .controls {
             width: 100%;
             background: white;
-            padding: 15px 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            padding: 20px 0;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -56,35 +57,35 @@
             display: flex;
             gap: 15px;
             overflow-x: auto;
-            padding: 0 20px;
-            padding-bottom: 10px;
+            padding: 0 25px;
+            padding-bottom: 15px;
             scrollbar-width: thin;
             scrollbar-color: #ff69b4 #eee;
         }
         
         .frame-item {
-            min-width: 80px;
-            height: 80px;
-            border: 3px solid transparent;
-            border-radius: 10px;
+            min-width: 90px;
+            height: 90px;
+            border: 3px solid #eee;
+            border-radius: 15px;
             cursor: pointer;
             overflow: hidden;
-            background: #eee;
-            transition: 0.2s;
+            background: #f9f9f9;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
         }
         .frame-item img { width: 100%; height: 100%; object-fit: contain; }
-        .frame-item.active { border-color: #ff69b4; transform: scale(1.05); }
+        .frame-item.active { border-color: #ff69b4; transform: scale(1.1); box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); }
 
         .btn-group {
             display: flex;
             justify-content: center;
             gap: 20px;
-            padding-bottom: env(safe-area-inset-bottom, 10px);
+            padding-bottom: env(safe-area-inset-bottom, 15px);
         }
 
         button, .btn-home {
-            padding: 12px 40px;
+            padding: 12px 45px;
             border: none;
             border-radius: 50px;
             font-size: 1.2rem;
@@ -99,14 +100,14 @@
         }
 
         .btn-confirm { background: #ff4757; color: white; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); }
-        .btn-confirm:hover { transform: scale(1.05); background: #ff6b81; }
+        .btn-confirm:hover { transform: translateY(-3px); background: #ff6b81; }
         .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
 
-        .btn-home { background: #eee; color: #555; }
+        .btn-home { background: #f0f0f0; color: #666; }
 
         #upload-loading {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             display: none; flex-direction: column; align-items: center;
             justify-content: center; z-index: 1000; font-size: 1.5rem; color: #ff69b4;
         }
@@ -115,12 +116,13 @@
 <body>
 
     <div id="upload-loading">
-        <div>กำลังบันทึกความทรงจำ...</div>
-        <div style="font-size: 1rem; color: #aaa; margin-top: 10px;">กรุณารอสักครู่</div>
+        <div style="font-size: 3rem; margin-bottom: 10px;">🦉</div>
+        <div style="font-weight: 600;">กำลังบันทึกความทรงจำ...</div>
+        <div style="font-size: 1rem; color: #aaa; margin-top: 10px;">กรุณารอสักครู่ อย่าเพิ่งปิดหน้านี้นะ</div>
     </div>
 
     <div class="header">
-        <h1>เลือกกรอบรูปน่ารักๆ ✨</h1>
+        <h1>เลือกกรอบรูปที่ถูกใจ ✨</h1>
     </div>
 
     <div class="preview-area">
@@ -128,15 +130,16 @@
     </div>
 
     <div class="controls">
-        <div style="text-align: center; color:#888; font-size:0.9rem;">เลือกกรอบที่ชอบ แล้วกดยืนยันได้เลย</div>
+        <div style="text-align: center; color:#888; font-size:0.9rem;">เลื่อนเพื่อเลือกกรอบที่คุณชอบที่สุด</div>
         <div class="frame-list" id="frameList"></div>
         <div class="btn-group">
-            <a href="main.html" class="btn-home" onclick="return confirm('กลับหน้าแรกรูปจะหายไปนะ?')">🏠 หน้าแรก</a>
-            <button id="confirmBtn" class="btn-confirm" onclick="uploadAndFinish()">ยืนยัน ✅</button>
+            <a href="main.html" class="btn-home" onclick="return confirm('ข้อมูลรูปภาพจะหายไป ต้องการกลับหน้าหลักใช่ไหม?')">🏠 หน้าแรก</a>
+            <button id="confirmBtn" class="btn-confirm" onclick="uploadAndFinish()">ยืนยันความสวย ✅</button>
         </div>
     </div>
 
     <script>
+    // การตั้งค่า Supabase
     const supabaseUrl = 'https://mhdlmwscndyyokvcqqla.supabase.co';
     const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -145,16 +148,18 @@
     const ctx = canvas.getContext('2d');
     const frameList = document.getElementById('frameList');
 
+    // ดึงข้อมูลรูปภาพจาก LocalStorage
     const rawPhotoData = localStorage.getItem('raw_photo');
     const layoutType = localStorage.getItem('layout_type') || 'strip3';
 
     let rawImgObj = new Image();
     let currentFrameObj = null;
 
+    // การตั้งค่าจำนวนกรอบรูป (อัปเดต strip4 เป็น 25 แบบ)
     let framesConfig = {
         'polaroid': { folder: 'assets/frames/1รูป', count: 5 }, 
         'strip3':   { folder: 'assets/frames/3รูป', count: 4 },
-        'strip4':   { folder: 'assets/frames/4รูปแนวตั้ง', count: 10 }, 
+        'strip4':   { folder: 'assets/frames/4รูปแนวตั้ง', count: 25 }, // อัปเดตตามที่ต้องการ
         'grid2x2':  { folder: 'assets/frames/4รูปgrid', count: 10 }
     };
 
@@ -168,8 +173,11 @@
         };
     }
 
+    // โหลดรายการกรอบรูปมาแสดงในแถบด้านล่าง
     function loadFrameOptions() {
         const config = framesConfig[layoutType] || framesConfig['strip3'];
+        frameList.innerHTML = ''; // ล้างค่าเก่าก่อนโหลด
+
         for (let i = 1; i <= config.count; i++) {
             const div = document.createElement('div');
             div.className = 'frame-item';
@@ -177,6 +185,7 @@
             const img = document.createElement('img');
             img.src = framePath;
             div.appendChild(img);
+            
             div.onclick = () => {
                 const fImg = new Image();
                 fImg.src = framePath;
@@ -191,6 +200,7 @@
         }
     }
 
+    // วาดภาพต้นฉบับทับด้วยกรอบรูปที่เลือก
     function drawComposition() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(rawImgObj, 0, 0);
@@ -199,6 +209,7 @@
         }
     }
 
+    // ฟังก์ชันอัปโหลดและบันทึกข้อมูล
     async function uploadAndFinish() {
         const confirmBtn = document.getElementById('confirmBtn');
         const loadingOverlay = document.getElementById('upload-loading');
@@ -209,32 +220,35 @@
         try {
             const timestamp = Date.now();
             
-            // 1. สร้างรูปใหญ่ (PNG)
+            // 1. เตรียมไฟล์รูปภาพต้นฉบับ (PNG)
             const fullBlob = dataURLtoBlob(canvas.toDataURL('image/png'));
             const fullFileName = `results/photo-${timestamp}.png`;
 
-            // 2. สร้างรูปย่อ (Thumbnail)
+            // 2. เตรียมไฟล์รูปย่อ (Thumbnail) เพื่อความรวดเร็วในการเปิด Gallery
             const thumbBlob = await createThumbnail(canvas, 400);
             const thumbFileName = `gallery/thumb-${timestamp}.jpg`;
 
-            // 3. อัปโหลดทั้งคู่ไปที่ Bucket: 'photobooth'
-            await supabaseClient.storage.from('photobooth').upload(fullFileName, fullBlob);
-            await supabaseClient.storage.from('photobooth').upload(thumbFileName, thumbBlob);
+            // 3. อัปโหลดไปยัง Supabase Storage
+            const uploadFull = await supabaseClient.storage.from('photobooth').upload(fullFileName, fullBlob);
+            const uploadThumb = await supabaseClient.storage.from('photobooth').upload(thumbFileName, thumbBlob);
 
-            // 4. รับ URL สาธารณะ
+            if (uploadFull.error) throw uploadFull.error;
+            if (uploadThumb.error) throw uploadThumb.error;
+
+            // 4. รับ Public URL เพื่อส่งให้ลูกค้าสแกน QR
             const { data: { publicUrl: fullUrl } } = supabaseClient.storage.from('photobooth').getPublicUrl(fullFileName);
             const { data: { publicUrl: thumbUrl } } = supabaseClient.storage.from('photobooth').getPublicUrl(thumbFileName);
 
-            // 5. บันทึกลงฐานข้อมูล (แก้ชื่อคอลัมน์ให้ตรงตามภาพที่คุณส่งมา)
+            // 5. บันทึกลงตาราง photos (ชื่อคอลัมน์ตามที่คุณกำหนด)
             const { error: dbError } = await supabaseClient.from('photos').insert({
-                preview_url: thumbUrl,   // แก้เป็น preview_url ตาม image_96a7f7.png
-                full_res_path: fullUrl, // แก้เป็น full_res_path ตาม image_96a717.png
+                preview_url: thumbUrl,   // คอลัมน์สำหรับรูปย่อ
+                full_res_path: fullUrl,  // คอลัมน์สำหรับรูปเต็ม
                 is_active: true
             });
 
             if (dbError) throw dbError;
 
-            // สำเร็จ! ไปที่หน้า Result
+            // 6. ไปที่หน้าแสดงผล (พร้อมส่ง URL ไปเจน QR)
             window.location.href = `Result.html?url=${encodeURIComponent(fullUrl)}`;
 
         } catch (err) {
@@ -245,6 +259,7 @@
         }
     }
 
+    // ตัวแปลง Data URL เป็น Blob เพื่ออัปโหลด
     function dataURLtoBlob(dataurl) {
         let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
             bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
@@ -252,6 +267,7 @@
         return new Blob([u8arr], {type:mime});
     }
 
+    // ตัวสร้างรูปย่อเพื่อประหยัดพื้นที่ Database
     function createThumbnail(sourceCanvas, maxWidth) {
         return new Promise((resolve) => {
             const thumbCanvas = document.createElement('canvas');
@@ -260,7 +276,7 @@
             thumbCanvas.height = sourceCanvas.height * ratio;
             const tCtx = thumbCanvas.getContext('2d');
             tCtx.drawImage(sourceCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-            thumbCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+            thumbCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
         });
     }
 </script>
