@@ -15,9 +15,8 @@
         h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 15px; font-size: 2.5rem; }
         #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 3px solid #f8f9fa; max-height: 300px; object-fit: contain; }
         
-        /* แก้ไขส่วนนี้เพื่อให้ QR โหลดได้นิ่งขึ้น */
         .qr-section { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
-        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); min-width: 150px; min-height: 150px; }
+        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); }
         
         #status { font-weight: 600; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .loader { width: 18px; height: 18px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
@@ -41,7 +40,7 @@
     
     <div class="qr-section" id="qr-wrap">
         <div id="qrcode"></div>
-        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">✨ สแกนเพื่อรับรูปเข้ามือถือ ✨</div>
+        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">✨ สแกนเพื่อดูรูปภาพและรับสิทธิ์ ✨</div>
     </div>
 
     <a href="main.html" class="btn-done">กลับหน้าแรก</a>
@@ -74,40 +73,42 @@
             const fileName = `happy-owl-${Date.now()}.png`;
             const filePath = `results/${fileName}`;
 
+            // 1. Upload to Supabase
             const { data, error } = await supabase.storage
                 .from('photobooth')
                 .upload(filePath, blob, { contentType: 'image/png' });
 
             if (error) throw error;
 
+            // 2. Get Public URL (ลิงก์ตรงของรูปภาพ)
             const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
 
-            // สร้าง URL สำหรับหน้า download
-            const downloadPageUrl = `${window.location.origin}/download.html?image=${encodeURIComponent(publicUrl)}`;
-
-            // --- ขั้นตอนการแสดง QR Code แบบเสถียร ---
+            // 3. ปรับสถานะและแสดง QR Code
             document.getElementById('status-text').innerText = "ถ่ายสวยมาก! เรียบร้อยแล้ว";
             document.getElementById('loader').style.display = 'none';
             
-            // 1. แสดง Wrapper ก่อน
             const qrWrap = document.getElementById('qr-wrap');
             qrWrap.style.display = 'flex';
-
-            // 2. เคลียร์ค่าเดิมใน qrcode div
+            
             const qrcodeContainer = document.getElementById("qrcode");
             qrcodeContainer.innerHTML = "";
 
-            // 3. สร้าง QRCode (ใส่ setTimeout เล็กน้อยเพื่อให้ DOM อัปเดต display: flex ก่อน)
+            // สร้าง QR Code ชี้ไปที่ publicUrl ของรูปโดยตรง
             setTimeout(() => {
                 new QRCode(qrcodeContainer, {
-                    text: downloadPageUrl,
-                    width: 150,
-                    height: 150,
+                    text: publicUrl, // ลิงก์ตรงของรูป
+                    width: 160,
+                    height: 160,
                     colorDark : "#f72585",
                     colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
+                    correctLevel : QRCode.CorrectLevel.M // ปรับเป็น Level M เพื่อให้สแกนง่ายขึ้นสำหรับลิงก์ยาว
                 });
             }, 50);
+
+            // แจ้งเตือนสิทธิพิเศษที่หน้าตู้แทน (เพราะลูกค้าจะไม่ได้ผ่านหน้า download.html แล้ว)
+            setTimeout(() => {
+                alert("บันทึกรูปเรียบร้อย! อย่าลืมสแกนรับรูปและรับลูกอมที่เคาน์เตอร์นะคะ 🍬🦉");
+            }, 500);
 
         } catch (err) {
             console.error(err);
