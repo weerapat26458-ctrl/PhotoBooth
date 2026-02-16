@@ -8,27 +8,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap');
-        :root { --primary: #f72585; --bg: #fff0f3; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(247, 37, 133, 0.15); text-align: center; max-width: 500px; width: 90%; }
-        h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 20px; font-size: 2.5rem; }
-        #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 2px solid var(--bg); }
-        .qr-container { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
-        #qrcode { padding: 10px; background: white; border-radius: 15px; border: 2px solid var(--primary); }
-        #status { font-weight: 600; color: #888; margin-bottom: 10px; }
-        .btn-done { background: var(--primary); color: white; padding: 12px 40px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 20px; font-weight: 600; }
+        :root { --primary: #f72585; --secondary: #7209b7; --bg: #fff0f3; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        
+        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(247,37,133,0.15); text-align: center; max-width: 450px; width: 90%; animation: fadeIn 0.8s ease; }
+        h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 15px; font-size: 2.5rem; }
+        #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 3px solid #f8f9fa; max-height: 300px; object-fit: contain; }
+        
+        .qr-section { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
+        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); }
+        
+        #status { font-weight: 600; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .loader { width: 18px; height: 18px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-done { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; padding: 12px 40px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 20px; font-weight: 600; transition: 0.3s; }
+        .btn-done:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>Happy Owl 🦉</h1>
-    <div id="status">กำลังบันทึกความทรงจำของคุณ...</div>
-    <img id="final-preview" alt="Processing...">
+    <div id="status">
+        <div class="loader" id="loader"></div>
+        <span id="status-text">กำลังบันทึกความทรงจำ...</span>
+    </div>
     
-    <div class="qr-container" id="qr-wrap" style="display: none;">
+    <img id="final-preview" src="" alt="Processing...">
+    
+    <div class="qr-section" id="qr-wrap">
         <div id="qrcode"></div>
-        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">สแกนเพื่อรับรูปเข้ามือถือ ✨</div>
+        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">✨ สแกนเพื่อรับรูปเข้ามือถือ ✨</div>
     </div>
 
     <a href="main.html" class="btn-done">กลับหน้าแรก</a>
@@ -39,45 +51,62 @@
     const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+    // ช่วยแปลง Base64 เป็น Blob
+    function dataURLtoBlob(dataurl) {
+        let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--) { u8arr[n] = bstr.charCodeAt(n); }
+        return new Blob([u8arr], {type:mime});
+    }
+
     window.onload = async () => {
         const rawPhoto = localStorage.getItem('raw_photo');
-        if (!rawPhoto) return;
-
-        document.getElementById('final-preview').src = rawPhoto;
-        
-        // 1. แปลงรูปจาก LocalStorage เป็น Blob
-        const blob = await fetch(rawPhoto).then(res => res.blob());
-        const fileName = `happy-owl-${Date.now()}.png`;
-        const filePath = `results/${fileName}`;
-
-        // 2. อัปโหลดไปที่ Supabase Storage
-        const { data, error } = await supabase.storage
-            .from('photobooth')
-            .upload(filePath, blob, { contentType: 'image/png' });
-
-        if (error) {
-            document.getElementById('status').innerText = "เกิดข้อผิดพลาดในการบันทึก!";
+        if (!rawPhoto) {
+            document.getElementById('status-text').innerText = "ไม่พบรูปถ่าย!";
+            document.getElementById('loader').style.display = 'none';
             return;
         }
 
-        // 3. ดึง Public URL
-        const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
+        document.getElementById('final-preview').src = rawPhoto;
+        
+        try {
+            const blob = dataURLtoBlob(rawPhoto);
+            const fileName = `happy-owl-${Date.now()}.png`;
+            const filePath = `results/${fileName}`;
 
-        // 4. สร้างลิงก์ไปยังหน้า download.html (ฝั่ง Client)
-        const downloadPageUrl = `${window.location.origin}/download.html?url=${encodeURIComponent(publicUrl)}`;
+            // 1. Upload to Supabase
+            const { data, error } = await supabase.storage
+                .from('photobooth')
+                .upload(filePath, blob, { contentType: 'image/png' });
 
-        // 5. แสดง QR Code
-        document.getElementById('status').innerText = "เรียบร้อยแล้ว!";
-        document.getElementById('qr-wrap').style.display = 'flex';
-        new QRCode(document.getElementById("qrcode"), {
-            text: downloadPageUrl,
-            width: 140,
-            height: 140,
-            colorDark : "#f72585",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+            if (error) throw error;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
+
+            // 3. Create Link to download.html
+            // ส่งค่า publicUrl ไปยังหน้าดาวน์โหลดผ่าน Query Stringชื่อ image
+            const downloadPageUrl = `${window.location.origin}/download.html?image=${encodeURIComponent(publicUrl)}`;
+
+            // 4. Show QR Code
+            document.getElementById('status-text').innerText = "ถ่ายสวยมาก! เรียบร้อยแล้ว";
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('qr-wrap').style.display = 'flex';
+            
+            new QRCode(document.getElementById("qrcode"), {
+                text: downloadPageUrl,
+                width: 150,
+                height: 150,
+                colorDark : "#f72585",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('status-text').innerText = "เกิดข้อผิดพลาด!";
+            document.getElementById('loader').style.display = 'none';
+        }
     };
 </script>
 </body>
 </html>
-
