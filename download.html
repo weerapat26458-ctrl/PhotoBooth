@@ -20,7 +20,7 @@
             background: white; padding: 15px; border-radius: 20px;
             box-shadow: 0 10px 30px rgba(247,37,133,0.1); margin-bottom: 25px;
         }
-        img { width: 100%; border-radius: 12px; display: block; }
+        img { width: 100%; border-radius: 12px; display: block; border: 1px solid #eee; }
         
         p { color: #666; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.4; }
         
@@ -52,24 +52,32 @@
         <a id="downloadLink" href="" download="happy-owl-photo.png" class="btn btn-save">📥 บันทึกลงเครื่อง</a>
     </div>
 
-    <div class="footer">ขอบคุณที่มาใช้บริการ Happy Owl Photobooth</div>
+    <div class="footer">Powered by JFF CORP's</div>
 </div>
 
 <script>
-    // 1. ดึง URL รูปจาก Query String
     const urlParams = new URLSearchParams(window.location.search);
     const imageUrl = urlParams.get('image');
     const photoDisplay = document.getElementById('photo-display');
     const downloadLink = document.getElementById('downloadLink');
 
-    if (imageUrl) {
-        photoDisplay.src = imageUrl;
-        downloadLink.href = imageUrl;
-    } else {
-        alert("ขออภัย ไม่พบรูปภาพของคุณ");
-    }
+    window.onload = () => {
+        if (imageUrl) {
+            photoDisplay.src = imageUrl;
+            downloadLink.href = imageUrl;
 
-    // 2. ระบบ Web Share API
+            // --- ส่วนที่เพิ่มใหม่: Alert แจ้งสิทธิพิเศษ ---
+            setTimeout(() => {
+                alert("ขอบคุณที่ร่วมกิจกรรมกับ Happy Owl 🦉\n\nยินดีด้วย! คุณสามารถรับลูกอมได้ฟรีที่หน้าเคาน์เตอร์ได้เลยนะคะ 🍬✨");
+            }, 800); // หน่วงเวลาเล็กน้อยเพื่อให้รูปขึ้นมาก่อนเด้ง Alert
+            // --------------------------------------
+
+        } else {
+            alert("ขออภัย ไม่พบรูปภาพของคุณ");
+        }
+    };
+
+    // ระบบ Share
     document.getElementById('shareBtn').addEventListener('click', async () => {
         if (navigator.share) {
             try {
