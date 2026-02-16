@@ -15,8 +15,9 @@
         h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0 0 15px; font-size: 2.5rem; }
         #final-preview { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 3px solid #f8f9fa; max-height: 300px; object-fit: contain; }
         
+        /* แก้ไขส่วนนี้เพื่อให้ QR โหลดได้นิ่งขึ้น */
         .qr-section { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
-        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); }
+        #qrcode { padding: 12px; background: white; border-radius: 15px; border: 3px solid var(--primary); min-width: 150px; min-height: 150px; }
         
         #status { font-weight: 600; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .loader { width: 18px; height: 18px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
@@ -51,7 +52,6 @@
     const supabaseKey = 'sb_publishable_fr1iDj6c6_lWS7bHQF3d4w_D6VoatP4';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // ช่วยแปลง Base64 เป็น Blob
     function dataURLtoBlob(dataurl) {
         let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
             bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
@@ -74,32 +74,40 @@
             const fileName = `happy-owl-${Date.now()}.png`;
             const filePath = `results/${fileName}`;
 
-            // 1. Upload to Supabase
             const { data, error } = await supabase.storage
                 .from('photobooth')
                 .upload(filePath, blob, { contentType: 'image/png' });
 
             if (error) throw error;
 
-            // 2. Get Public URL
             const { data: { publicUrl } } = supabase.storage.from('photobooth').getPublicUrl(filePath);
 
-            // 3. Create Link to download.html
-            // ส่งค่า publicUrl ไปยังหน้าดาวน์โหลดผ่าน Query Stringชื่อ image
+            // สร้าง URL สำหรับหน้า download
             const downloadPageUrl = `${window.location.origin}/download.html?image=${encodeURIComponent(publicUrl)}`;
 
-            // 4. Show QR Code
+            // --- ขั้นตอนการแสดง QR Code แบบเสถียร ---
             document.getElementById('status-text').innerText = "ถ่ายสวยมาก! เรียบร้อยแล้ว";
             document.getElementById('loader').style.display = 'none';
-            document.getElementById('qr-wrap').style.display = 'flex';
             
-            new QRCode(document.getElementById("qrcode"), {
-                text: downloadPageUrl,
-                width: 150,
-                height: 150,
-                colorDark : "#f72585",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            // 1. แสดง Wrapper ก่อน
+            const qrWrap = document.getElementById('qr-wrap');
+            qrWrap.style.display = 'flex';
+
+            // 2. เคลียร์ค่าเดิมใน qrcode div
+            const qrcodeContainer = document.getElementById("qrcode");
+            qrcodeContainer.innerHTML = "";
+
+            // 3. สร้าง QRCode (ใส่ setTimeout เล็กน้อยเพื่อให้ DOM อัปเดต display: flex ก่อน)
+            setTimeout(() => {
+                new QRCode(qrcodeContainer, {
+                    text: downloadPageUrl,
+                    width: 150,
+                    height: 150,
+                    colorDark : "#f72585",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }, 50);
 
         } catch (err) {
             console.error(err);
