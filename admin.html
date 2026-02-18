@@ -79,8 +79,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .photo-card.inactive { opacity: 0.5; filter: grayscale(1); }
 
-        .img-container { width: 100%; aspect-ratio: 1/1.2; background: #f9f9f9; position: relative; overflow: hidden; }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .img-container { 
+            width: 100%; aspect-ratio: 1/1.2; background: #f9f9f9; 
+            position: relative; overflow: hidden; cursor: zoom-in;
+        }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+        .img-container:hover img { transform: scale(1.05); }
         .time-tag { position: absolute; bottom: 12px; right: 12px; background: rgba(255, 255, 255, 0.85); padding: 5px 15px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
 
         .controls { padding: 20px; }
@@ -97,11 +101,33 @@
             color: white; padding: 18px 60px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600;
         }
         #empty-state { text-align: center; grid-column: 1 / -1; padding: 100px 0; display: none; }
+
+        /* Lightbox Viewer */
+        .modal-viewer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none;
+            justify-content: center; align-items: center; z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-viewer.active { display: flex; }
+        .modal-content { position: relative; max-width: 90%; max-height: 90%; }
+        .modal-content img { max-width: 100%; max-height: 85vh; border-radius: 15px; border: 3px solid white; }
+        .close-modal {
+            position: absolute; top: -50px; right: 0; color: white;
+            font-size: 35px; cursor: pointer; font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
 <div id="heart-container"></div>
+
+<div id="imageViewer" class="modal-viewer" onclick="closeLightbox()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-modal" onclick="closeLightbox()">&times;</span>
+        <img id="fullImage" src="" alt="Full Resolution">
+    </div>
+</div>
 
 <div class="container">
     <div class="header">
@@ -156,6 +182,17 @@
     }
     setInterval(createHeart, 800);
 
+    // Lightbox Functions
+    function openLightbox(url) {
+        document.getElementById('fullImage').src = url;
+        document.getElementById('imageViewer').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('imageViewer').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date-picker').value = today;
@@ -199,7 +236,8 @@
         const from = currentPage * itemsPerPage;
         const to = from + itemsPerPage - 1;
 
-        let query = supabaseClient.from('photos').select('id, preview_url, is_active, created_at');
+        // ดึง full_res_path มาแสดง และ preview_url มาใช้ลบ
+        let query = supabaseClient.from('photos').select('id, full_res_path, preview_url, is_active, created_at');
 
         if (currentFilterMode === 'date') {
             const selectedDate = document.getElementById('date-picker').value;
@@ -232,9 +270,10 @@
         const dateObj = new Date(photo.created_at);
         const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 
+        // แสดงผลด้วย full_res_path
         card.innerHTML = `
-            <div class="img-container">
-                <img src="${photo.preview_url}" loading="lazy">
+            <div class="img-container" onclick="openLightbox('${photo.full_res_path}')">
+                <img src="${photo.full_res_path}" loading="lazy">
                 <div class="time-tag">⏰ ${timeStr}</div>
             </div>
             <div class="controls">
@@ -268,27 +307,26 @@
     }
 
     async function deleteImg(id) {
-        if (confirm('⚠️ ต้องการลบรูปภาพนี้ออกจากทั้งฐานข้อมูลและพื้นที่จัดเก็บถาวรหรือไม่?')) {
+        if (confirm('⚠️ ต้องการลบรูปภาพนี้จากฐานข้อมูลและลบไฟล์ใน preview หรือไม่?')) {
             try {
-                // 1. ดึงข้อมูลเพื่อเอา URL ไปหาชื่อไฟล์ใน Storage
+                // 1. ดึงข้อมูล preview_url เพื่อไปลบไฟล์ใน Storage
                 const { data: photoData } = await supabaseClient.from('photos').select('preview_url').eq('id', id).single();
 
                 if (photoData && photoData.preview_url) {
-                    // ตัด URL เพื่อเอาเฉพาะ Path ใน Bucket
                     const pathParts = photoData.preview_url.split('/storage/v1/object/public/photobooth/');
                     const filePath = pathParts[1];
                     
                     if (filePath) {
-                        // 2. ลบไฟล์จริงใน Storage
+                        // ลบไฟล์ใน Storage (โฟลเดอร์ preview)
                         await supabaseClient.storage.from('photobooth').remove([filePath]);
                     }
                 }
 
-                // 3. ลบข้อมูลใน Database
+                // 2. ลบข้อมูลใน Database
                 const { error } = await supabaseClient.from('photos').delete().eq('id', id);
                 if (error) throw error;
 
-                // 4. ลบออกจาก UI
+                // 3. ลบออกจาก UI
                 const card = document.getElementById(`card-${id}`);
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.8)';
