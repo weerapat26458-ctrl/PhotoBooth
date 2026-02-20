@@ -13,13 +13,14 @@
             --dark-pink: #ff69b4;
             --soft-pink: #fff0f3;
             --navy-blue: #2c3e50;
+            --star-gold: #ffd700;
         }
 
         body {
             font-family: 'Kanit', sans-serif;
             background-color: var(--soft-pink);
             margin: 0;
-            overflow: hidden; /* ล็อกหน้าจอหน้าเดียว */
+            overflow: hidden; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -27,7 +28,6 @@
             height: 100vh;
         }
 
-        /* --- Falling Hearts --- */
         .heart-particle {
             position: fixed; top: -10%; color: var(--dark-pink);
             font-size: 20px; user-select: none; z-index: 0;
@@ -35,48 +35,58 @@
         }
         @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
 
-        /* --- Main Card --- */
         .result-container {
             position: relative; z-index: 10;
             background: white; padding: 25px;
             border-radius: 25px;
             box-shadow: 0 10px 30px rgba(255, 105, 180, 0.2);
             text-align: center;
-            max-width: 400px; width: 85%;
+            max-width: 450px; width: 90%;
             display: flex; flex-direction: column; gap: 15px;
         }
 
         .photo-preview-container {
-            width: 100%; height: 250px; /* ย่อขนาด Preview เพื่อประหยัดพื้นที่ */
+            width: 100%; height: 200px; 
             overflow: hidden; border-radius: 12px;
             background: #fdfdfd; border: 2px solid var(--soft-pink);
         }
 
         .photo-preview { width: 100%; height: 100%; object-fit: contain; }
 
-        /* --- QR Section (Instant Render) --- */
+        /* --- QR Wrapper Layout --- */
+        .qr-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
         .qr-section {
             display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
 
-        #qrcode {
-            padding: 10px; background: #fff;
+        .qr-box {
+            padding: 8px; background: #fff;
             border: 2px solid var(--primary-pink); border-radius: 12px;
+            width: 110px; height: 110px;
         }
 
         .qr-label {
-            font-size: 1rem; font-weight: 600; color: var(--navy-blue);
+            font-size: 0.85rem; font-weight: 600; color: var(--navy-blue);
         }
 
+        /* --- Buttons --- */
+        .action-btns { margin-top: 10px; }
         .btn-home {
             background: linear-gradient(45deg, var(--dark-pink), var(--primary-pink));
-            color: white; padding: 12px 30px; border-radius: 50px;
+            color: white; padding: 10px 25px; border-radius: 50px;
             text-decoration: none; font-weight: 600; display: inline-block;
             box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); transition: 0.2s;
+            font-size: 0.9rem;
         }
         .btn-home:hover { transform: scale(1.05); }
 
-        .footer-note { font-size: 0.75rem; color: #aaa; margin: 0; }
+        .footer-note { font-size: 0.7rem; color: #aaa; margin: 0; }
     </style>
 </head>
 <body>
@@ -86,52 +96,69 @@
             <img id="finalPhoto" alt="Final Result" class="photo-preview">
         </div>
 
-        <div class="qr-section">
-            <div id="qrcode"></div> <div class="qr-label">สแกนเพื่อดาวน์โหลด</div>
+        <div class="qr-wrapper">
+            <div class="qr-section">
+                <div id="qrcode-photo" class="qr-box"></div> 
+                <div class="qr-label">💾 โหลดรูปภาพ</div>
+            </div>
+            <div class="qr-section">
+                <div id="qrcode-form" class="qr-box"></div> 
+                <div class="qr-label">⭐ ให้คะแนนเรา</div>
+            </div>
         </div>
 
         <div class="action-btns">
             <a href="main.html" class="btn-home">ถ่ายรูปเพิ่ม ❤️</a>
         </div>
         
-        <p class="footer-note">สแกนเพื่อเก็บความทรงจำไว้นะ!</p>
+        <p class="footer-note">อย่าลืมสแกนประเมินเพื่อรับลูกอมที่เคาน์เตอร์นะคะ!</p>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const photoUrl = urlParams.get('url');
+            const formUrl = "https://forms.gle/FJcX6CbppMVQxtDN9"; // URL ประเมินของคุณ
             
             if (photoUrl) {
-                // 1. แสดงรูปทันที
+                // 1. แสดงรูปภาพ
                 document.getElementById('finalPhoto').src = photoUrl;
                 
-                // 2. สร้าง QR Code
-                new QRCode(document.getElementById("qrcode"), {
+                // 2. สร้าง QR Code สำหรับรูปภาพ
+                new QRCode(document.getElementById("qrcode-photo"), {
                     text: photoUrl,
-                    width: 130,
-                    height: 130,
+                    width: 110,
+                    height: 110,
                     colorDark : "#2c3e50",
                     colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+
+                // 3. สร้าง QR Code สำหรับแบบฟอร์มประเมิน
+                new QRCode(document.getElementById("qrcode-form"), {
+                    text: formUrl,
+                    width: 110,
+                    height: 110,
+                    colorDark : "#ff69b4", // สีชมพูเข้มให้ดูต่างจากอันแรก
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
                 });
     
-                // --- ส่วนที่เพิ่มใหม่: Alert แจ้งรับลูกอม ---
+                // Alert แจ้งเตือน
                 setTimeout(() => {
-                    alert("ถ่ายรูปเสร็จแล้ว! อย่าลืมสแกนเก็บรูปไว้นะคะ 🦉✨\n\nยินดีด้วย! คุณสามารถไปรับลูกอมได้ฟรีที่หน้าเคาน์เตอร์ได้เลยค่ะ 🍬❤️");
-                }, 1000); // เด้งหลังจากผ่านไป 1 วินาที
-                // --------------------------------------
+                    alert("ถ่ายรูปเสร็จแล้ว! 🦉✨\n\n1. สแกนโหลดรูปด้านซ้าย\n2. สแกนประเมินด้านขวา\n\nเสร็จแล้วรับลูกอมฟรีที่เคาน์เตอร์ได้เลยค่ะ 🍬❤️");
+                }, 1000);
     
             } else {
                 window.location.href = 'main.html';
             }
         });
     
-        // Falling Hearts Effect (เหมือนเดิม)
+        // Falling Hearts Effect
         setInterval(() => {
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
-            heart.innerHTML = ['❤️','💖','✨'][Math.floor(Math.random()*3)];
+            heart.innerHTML = ['❤️','💖','✨','🍬'][Math.floor(Math.random()*4)];
             heart.style.left = Math.random() * 100 + 'vw';
             heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
             document.body.appendChild(heart);
@@ -140,4 +167,3 @@
     </script>
 </body>
 </html>
-
