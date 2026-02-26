@@ -332,6 +332,7 @@
         const c = document.createElement('canvas');
         const ctx = c.getContext('2d');
         
+        // กำหนดขนาดแผ่นกระดาษรวม
         if (layoutType === 'polaroid') { c.width = 900; c.height = 1100; } 
         else if (layoutType === 'grid2x2') { c.width = 1200; c.height = 1800; } 
         else { c.width = 600; c.height = 1800; }
@@ -353,9 +354,22 @@
                 drawCoverImage(ctx, img, 50 - (bleed/2), (130 + (i * 350)) - (bleed/2), 500 + bleed, 330 + bleed);
             });
         } else if (layoutType === 'grid2x2') {
-            const pos = [[160, 200], [595, 200], [160, 780], [595, 780]];
+            // ปรับแต่งค่าตรงนี้ได้เลย เข้าใจง่ายๆ:
+            const marginX = 80;  // เว้นจากขอบซ้าย
+            const marginY = 150; // เว้นจากขอบบน
+            const gap = 30;      // เว้นระหว่างรูป
+            const itemW = 500;   // ความกว้างรูป (แนวตั้ง)
+            const itemH = 700;   // ความสูงรูป (แนวตั้ง)
+
+            const pos = [
+                [marginX, marginY],                         // รูป 1 บนซ้าย
+                [marginX + itemW + gap, marginY],           // รูป 2 บนขวา
+                [marginX, marginY + itemH + gap],           // รูป 3 ล่างซ้าย
+                [marginX + itemW + gap, marginY + itemH + gap] // รูป 4 ล่างขวา
+            ];
+
             imgObjs.forEach((img, i) => {
-                drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), 435 + bleed, 580 + bleed);
+                drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), itemW + bleed, itemH + bleed);
             });
         }
     
