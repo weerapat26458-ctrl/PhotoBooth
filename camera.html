@@ -354,24 +354,26 @@
                 drawCoverImage(ctx, img, 50 - (bleed/2), (130 + (i * 350)) - (bleed/2), 500 + bleed, 330 + bleed);
             });
         } else if (layoutType === 'grid2x2') {
-            // ปรับแต่งค่าตรงนี้ได้เลย เข้าใจง่ายๆ:
-            const marginX = 82;  // เว้นจากขอบซ้าย
-            const marginY = 93; // เว้นจากขอบบน
-            const gap = 40;      // เว้นระหว่างรูป
-            const itemW = 500;   // ความกว้างรูป (แนวตั้ง)
-            const itemH = 700;   // ความสูงรูป (แนวตั้ง)
-
-            const pos = [
-                [marginX, marginY],                         // รูป 1 บนซ้าย
-                [marginX + itemW + gap, marginY],           // รูป 2 บนขวา
-                [marginX, marginY + itemH + gap],           // รูป 3 ล่างซ้าย
-                [marginX + itemW + gap, marginY + itemH + gap] // รูป 4 ล่างขวา
-            ];
-
-            imgObjs.forEach((img, i) => {
-                drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), itemW + bleed, itemH + bleed);
-            });
-        }
+        // ปรับค่าเหล่านี้เพื่อขยับรูป 3 และ 4 ขึ้นบน:
+        const marginX = 140;  // เว้นจากขอบซ้าย
+        const marginY = 150;  // เว้นจากขอบบน
+        const gapX = 35;      // ช่องว่างระหว่างรูปซ้าย-ขวา
+        const gapY = 50;     // *** ลดช่องว่างแนวตั้งจาก 80 เหลือ 50 เพื่อดึงรูปคู่ล่างขึ้นมา ***
+        const itemW = 445;    
+        const itemH = 500;   // *** ความสูงรูป (500) ถ้าลดลงอีก รูปก็จะยิ่งถูกดึงขึ้นไปด้านบนได้อีกครับ ***
+    
+        const pos = [
+            [marginX, marginY],                         // รูป 1 บนซ้าย
+            [marginX + itemW + gapX, marginY],           // รูป 2 บนขวา
+            [marginX, marginY + itemH + gapY],           // รูป 3 ล่างซ้าย (จะสูงขึ้นตาม itemH และ gapY ที่ลดลง)
+            [marginX + itemW + gapX, marginY + itemH + gapY] // รูป 4 ล่างขวา (จะสูงขึ้นตาม itemH และ gapY ที่ลดลง)
+        ];
+    
+        imgObjs.forEach((img, i) => {
+            // วาดรูปโดยเผื่อระยะ Bleed (ขอบตัดตก) ให้ครอบคลุมกรอบ
+            drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), itemW + bleed, itemH + bleed);
+        });
+    }
     
         localStorage.setItem('raw_photo', c.toDataURL('image/png'));
         localStorage.setItem('layout_type', layoutType);
@@ -417,6 +419,7 @@
 </script>
 </body>
 </html>
+
 
 
 
