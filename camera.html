@@ -80,7 +80,15 @@
 
         .preview-container { margin-top: 20px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
         .sim-box { background: #fff; border: 1px dashed #ffb6c1; border-radius: 8px; transition: 0.3s; overflow: hidden;}
-        .sim-strip, .sim-polaroid, .sim-grid { background: white !important; padding: 12px !important; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        
+        /* ปรับสัดส่วน Preview ของ Grid ให้ใกล้เคียงของจริง */
+        .sim-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            background: white !important; padding: 30px 15px 60px 15px !important; 
+            border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            aspect-ratio: 2/3; width: 180px;
+        }
+        .sim-strip, .sim-polaroid { background: white !important; padding: 12px !important; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
 
         .center-panel { display: flex; flex-direction: column; align-items: center; position: relative; }
         
@@ -91,7 +99,6 @@
         }
         #video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- Overlays สำหรับฟิลเตอร์พิเศษ --- */
         #heart-overlay {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
@@ -113,7 +120,6 @@
         .countdown-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;
             align-items: center; justify-content: center; 
-            background: rgba(0, 0, 0, 0);
             color: white; font-size: 14rem; font-weight: 700;
             font-family: 'Pacifico'; text-shadow: 2px 4px 20px rgba(0,0,0,0.5);
             z-index: 50; pointer-events: none;
@@ -226,7 +232,6 @@
     const flashEl = document.getElementById('flash');
     const shutterBtn = document.getElementById('shutterBtn');
 
-    // Overlays
     const heartOverlay = document.getElementById('heart-overlay');
     const hazeOverlay = document.getElementById('haze');
     const canvasTex = document.getElementById('canvas-tex');
@@ -288,17 +293,14 @@
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         
-        // ดึง CSS filters มาใช้
         ctx.filter = getComputedStyle(video).filter;
         ctx.drawImage(video, 0, 0);
 
-        // ถ้าเป็นฟิลเตอร์ Retro Love ให้วาดหัวใจลงในรูปที่บันทึกด้วย
         const activeFilter = filters.find(f => f.active);
         if (activeFilter && activeFilter.hasHeart) {
             ctx.strokeStyle = "white";
             ctx.lineWidth = 3;
             ctx.beginPath();
-            // วาดหัวใจจำลองกลางรูป (ปรับพิกัดตามขนาด Canvas)
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
             const size = 60;
@@ -318,12 +320,22 @@
         statusEl.innerText = `CAPTURED: ${shots.length} / ${maxShots}`;
     }
 
+    // ฟังก์ชันวาดรูปแก้ปัญหาเหลื่อมและบีบ (Center Crop)
     function drawCoverImage(ctx, img, x, y, targetW, targetH) {
         const imgRatio = img.width / img.height;
         const targetRatio = targetW / targetH;
         let sw, sh, sx, sy;
-        if (imgRatio > targetRatio) { sh = img.height; sw = img.height * targetRatio; sx = (img.width - sw) / 2; sy = 0; } 
-        else { sw = img.width; sh = img.width / targetRatio; sx = 0; sy = (img.height - sh) / 2; }
+        if (imgRatio > targetRatio) { 
+            sh = img.height; 
+            sw = img.height * targetRatio; 
+            sx = (img.width - sw) / 2; 
+            sy = 0; 
+        } else { 
+            sw = img.width; 
+            sh = img.width / targetRatio; 
+            sx = 0; 
+            sy = (img.height - sh) / 2; 
+        }
         ctx.drawImage(img, sx, sy, sw, sh, x, y, targetW, targetH);
     }
 
@@ -332,7 +344,6 @@
         const c = document.createElement('canvas');
         const ctx = c.getContext('2d');
         
-        // กำหนดขนาดแผ่นกระดาษรวม
         if (layoutType === 'polaroid') { c.width = 900; c.height = 1100; } 
         else if (layoutType === 'grid2x2') { c.width = 1200; c.height = 1800; } 
         else { c.width = 600; c.height = 1800; }
@@ -341,7 +352,7 @@
             const i = new Image(); i.onload = () => resolve(i); i.src = src;
         })));
 
-        const bleed = 22; 
+        const bleed = 20; 
 
         if (layoutType === 'polaroid') {
             drawCoverImage(ctx, imgObjs[0], 50 - (bleed/2), 50 - (bleed/2), 800 + bleed, 800 + bleed);
@@ -354,33 +365,30 @@
                 drawCoverImage(ctx, img, 50 - (bleed/2), (130 + (i * 350)) - (bleed/2), 500 + bleed, 330 + bleed);
             });
         } else if (layoutType === 'grid2x2') {
-        // ปรับค่าเหล่านี้เพื่อขยับรูป 3 และ 4 ขึ้นบน:
-        const marginX = 80;  // เว้นจากขอบซ้าย
-        const marginY = 150;  // เว้นจากขอบบน
-        const gapX = 35;      // ช่องว่างระหว่างรูปซ้าย-ขวา
-        const gapY = 45;     // *** ลดช่องว่างแนวตั้งจาก 80 เหลือ 50 เพื่อดึงรูปคู่ล่างขึ้นมา ***
-        const itemW = 500;    
-        const itemH = 700;   // *** ความสูงรูป (500) ถ้าลดลงอีก รูปก็จะยิ่งถูกดึงขึ้นไปด้านบนได้อีกครับ ***
-    
-        const pos = [
-            [marginX, marginY],                         // รูป 1 บนซ้าย
-            [marginX + itemW + gapX, marginY],           // รูป 2 บนขวา
-            [marginX, marginY + itemH + gapY],           // รูป 3 ล่างซ้าย (จะสูงขึ้นตาม itemH และ gapY ที่ลดลง)
-            [marginX + itemW + gapX, marginY + itemH + gapY] // รูป 4 ล่างขวา (จะสูงขึ้นตาม itemH และ gapY ที่ลดลง)
-        ];
-    
-        imgObjs.forEach((img, i) => {
-            // วาดรูปโดยเผื่อระยะ Bleed (ขอบตัดตก) ให้ครอบคลุมกรอบ
-            drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), itemW + bleed, itemH + bleed);
-        });
-    }
+            const marginX = 140; 
+            const marginY = 160; 
+            const gapX = 35;     
+            const gapY = 50;     // ระยะห่างที่ดึงรูปคู่ล่างขึ้นมาแล้ว
+            const itemW = 445;   
+            const itemH = 600;   // ปรับความสูงให้พอดีแนวตั้ง
+
+            const pos = [
+                [marginX, marginY],                         
+                [marginX + itemW + gapX, marginY],           
+                [marginX, marginY + itemH + gapY],           
+                [marginX + itemW + gapX, marginY + itemH + gapY] 
+            ];
+
+            imgObjs.forEach((img, i) => {
+                drawCoverImage(ctx, img, pos[i][0] - (bleed/2), pos[i][1] - (bleed/2), itemW + bleed, itemH + bleed);
+            });
+        }
     
         localStorage.setItem('raw_photo', c.toDataURL('image/png'));
         localStorage.setItem('layout_type', layoutType);
         window.location.href = 'customize.html';
     }
 
-    // --- รวมฟิลเตอร์ทั้ง 9 แบบ ---
     const filters = [
         { name: 'Original', val: 'none', color: '#fff' },
         { name: 'Noir', val: 'grayscale(100%) brightness(1.1) contrast(0.9)', color: '#555' },
@@ -400,17 +408,12 @@
         
         div.innerHTML = `<div class="filter-thumb" style="background:${f.color}"></div><span>${f.name}</span>`;
         div.onclick = () => {
-            // Reset filters
             filters.forEach(filter => filter.active = false);
             f.active = true;
-
             video.style.filter = f.val;
-            
-            // Toggle Overlays
             heartOverlay.style.display = f.hasHeart ? 'block' : 'none';
             hazeOverlay.style.opacity = f.hasHaze ? '1' : '0';
             canvasTex.style.opacity = f.isArt ? '0.1' : '0';
-
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             div.classList.add('active');
         };
@@ -419,18 +422,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
