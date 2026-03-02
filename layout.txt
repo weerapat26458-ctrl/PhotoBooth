@@ -111,6 +111,7 @@
             border-radius: 20px;
             font-size: 0.7rem;
             font-weight: bold;
+            z-index: 2;
         }
 
         .badge.new {
@@ -150,24 +151,23 @@
             <div class="layout-card" onclick="select(this, 'polaroid')">
                 <span class="badge new">NEW</span>
                 <img src="https://via.placeholder.com/150x180?text=Polaroid" alt="Polaroid">
-                <div>Polaroid</div>
+                <div>Classic</div>
             </div>
 
             <div class="layout-card" onclick="select(this, 'strip3')">
                 <span class="badge">TRY IT NOW</span>
                 <img src="https://via.placeholder.com/150x450?text=Strip+3" alt="Strip 3">
-                <div>Classic Strip (3)</div>
+                <div>Popular</div>
             </div>
 
             <div class="layout-card" onclick="select(this, 'strip4')">
-                <span class="badge new">NEW LAYOUT</span>
                 <img src="https://via.placeholder.com/150x450?text=Strip+4" alt="Strip 4">
                 <div>Full Strip (4)</div>
             </div>
 
             <div class="layout-card" onclick="select(this, 'grid2x2')">
                 <img src="https://via.placeholder.com/150x225?text=Grid+2x2" alt="Grid 2x2">
-                <div>Grid 2x2</div>
+                <div>New</div>
             </div>
         </div>
 
@@ -177,7 +177,6 @@
     <script>
         let selected = null;
 
-        // ฟังก์ชันเลือก Layout
         function select(el, id) {
             document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
@@ -186,29 +185,27 @@
         }
 
         function go() {
-            alert("กำลังไปหน้าถ่ายรูปด้วย Layout: " + selected);
-            // window.location.href = `capture.html?layout=${selected}`;
+            // แก้ไขให้ Link ไปหน้า capture จริงๆ
+            window.location.href = `capture.html?layout=${selected}`;
         }
 
         // --- ระบบ Falling Hearts ---
         function createHeart() {
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
-            heart.innerHTML = '❤️'; // ใช้ Emoji หัวใจ
+            heart.innerHTML = '❤️';
             heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 3 + 2) + 's'; // 2-5 วินาที
+            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
             heart.style.opacity = Math.random() * 0.5;
             heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
             
             document.body.appendChild(heart);
 
-            // ลบหัวใจทิ้งเมื่อตกจบเพื่อประหยัด RAM
             setTimeout(() => {
                 heart.remove();
             }, 5000);
         }
 
-        // สร้างหัวใจทุกๆ 300ms
         setInterval(createHeart, 300);
     </script>
 </body>
