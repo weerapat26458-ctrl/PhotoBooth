@@ -34,7 +34,7 @@
             z-index: 100;
         }
         .brand-logo img {
-            height: 70px; /* ปรับขนาดได้ตามความสวยงาม */
+            height: 70px;
             width: auto;
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
             transition: transform 0.3s ease;
@@ -154,11 +154,17 @@
             font-size: 0.7rem;
             font-weight: 800;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 5;
         }
 
-        .badge.new {
+        .badge.popular {
             background: var(--dark-pink);
             color: white;
+        }
+
+        .badge.classic {
+            background: #ffd60a; /* สีเหลืองทอง */
+            color: #000;
         }
 
         .start-btn {
@@ -208,26 +214,25 @@
 
         <div class="layout-grid">
             <div class="layout-card" onclick="select(this, 'polaroid', 1)">
-                <span class="badge new">POPULAR</span>
-                <img src="assets/frames/1รูป/1.png" alt="Polaroid">
-                <span class="label">Polaroid (1 Act)</span>
+                <span class="badge classic">CLASSIC</span>
+                <img src="assets/frames/1รูป/1.png" alt="Classic">
+                <span class="label">Classic (1 Act)</span>
             </div>
 
             <div class="layout-card" onclick="select(this, 'strip3', 3)">
-                <span class="badge">CLASSIC</span>
-                <img src="assets/frames/3รูป/1.png" alt="Strip 3">
-                <span class="label">Strip (3 Acts)</span>
+                 <span class="badge popular">POPULAR</span>
+                <img src="assets/frames/3รูป/1.png" alt="Popular">
+                <span class="label">Popular (3 Acts)</span>
             </div>
 
             <div class="layout-card" onclick="select(this, 'strip4', 4)">
-                <span class="badge new">NEW</span>
                 <img src="assets/frames/4รูปแนวตั้ง/1.png" alt="Strip 4">
                 <span class="label">Full Strip (4 Acts)</span>
             </div>
 
             <div class="layout-card" onclick="select(this, 'grid2x2', 4)">
                 <img src="assets/frames/4รูปgrid/1.png" alt="Grid 2x2">
-                <span class="label">Grid (4 Acts)</span>
+                <span class="label">New (4 Acts)</span>
             </div>
         </div>
 
